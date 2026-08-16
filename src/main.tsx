@@ -4,8 +4,10 @@ import { HashRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 import { ensureSeeded } from './store'
+import { APP_VERSION } from './version'
 
 ensureSeeded()
+console.info(`[Research OS] v${APP_VERSION} · 若界面异常请强制刷新(Ctrl+F5 / Cmd+Shift+R)`)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

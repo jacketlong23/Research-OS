@@ -9,6 +9,7 @@ import {
   resetToSeed,
 } from '../store'
 import { testAIConnection, type AITestResult } from '../ai/client'
+import { APP_VERSION } from '../version'
 
 const inputCls =
   'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
@@ -228,7 +229,9 @@ export default function SettingsPage() {
         {msg && <p className="mt-2 text-xs text-slate-400">{msg}</p>}
       </section>
 
-      <p className="pb-2 text-center text-[11px] text-slate-600">Research OS · 科研驾驶舱 · 今天优先,整周辅助</p>
+      <p className="pb-2 text-center text-[11px] text-slate-600">
+        Research OS · 科研驾驶舱 v{APP_VERSION} · 今天优先,整周辅助
+      </p>
     </div>
   )
 }

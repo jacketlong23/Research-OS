@@ -152,7 +152,7 @@ export default function Week() {
                             slotStart: item.kind === 'flexible' ? minutesToHHmm(item.start) : undefined,
                           })
                         }
-                        className={`absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 transition hover:brightness-125 ${c.block} ${
+                        className={`absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 transition-all duration-150 hover:brightness-125 hover:ring-1 hover:ring-white/30 active:scale-[0.97] ${c.block} ${
                           item.kind === 'fixed' ? 'border-dashed' : ''
                         } ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
                           item.task.status === 'done' ? 'opacity-40' : ''

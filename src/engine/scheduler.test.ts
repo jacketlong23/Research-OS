@@ -5,6 +5,7 @@ import {
   deleteSlot,
   findConflict,
   freeGaps,
+  insertTaskAtTime,
   insertTaskIncrementally,
   removeAllSlots,
   reschedule,
@@ -242,6 +243,23 @@ describe('slot 手动编辑', () => {
     const next = removeAllSlots(multi, 'a')
     expect(next[TODAY].length).toBe(1)
     expect(next[TOMORROW]).toBeUndefined()
+  })
+})
+
+describe('insertTaskAtTime(点击空白处快速安排)', () => {
+  it('锚点空闲时,任务从指定时刻开始', () => {
+    const t = flexTask({ duration_minutes: 60 })
+    const { schedule, anchored } = insertTaskAtTime(t, {}, [t], SETTINGS, NOW, 14 * 60)
+    expect(anchored).toBe(true)
+    expect(slotTimes(schedule, TODAY)).toEqual([['14:00', '15:00']])
+  })
+
+  it('锚点与固定事件冲突时,退回增量插入(从最早的空闲时间开始)', () => {
+    const fixed = fixedToday('14:00', '15:30')
+    const t = flexTask({ duration_minutes: 60 })
+    const { schedule, anchored } = insertTaskAtTime(t, {}, [fixed, t], SETTINGS, NOW, 14 * 60)
+    expect(anchored).toBe(false)
+    expect(slotTimes(schedule, TODAY)).toEqual([['09:00', '10:00']])
   })
 })
 

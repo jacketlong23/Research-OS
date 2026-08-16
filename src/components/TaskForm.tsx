@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { Task, TaskType } from '../types'
 import { useProjectsStore, useScheduleStore, useSettingsStore, useTasksStore } from '../store'
-import { insertTaskIncrementally } from '../engine/scheduler'
-import { isoToLocalInput, localInputToISO } from '../lib/time'
+import { insertTaskAtTime, insertTaskIncrementally } from '../engine/scheduler'
+import { isoToLocalInput, localInputToISO, minutesToHHmm } from '../lib/time'
 import { parseTaskNL } from '../ai/client'
 
 export interface TaskFormInitial {
@@ -17,6 +17,8 @@ export interface TaskFormInitial {
 
 interface Props {
   initial?: TaskFormInitial
+  /** 今日时间轴点击的空白时刻(分钟),创建后首块从这里开始 */
+  placeAtMinutes?: number
   onDone: () => void
 }
 
@@ -24,7 +26,7 @@ const inputCls =
   'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
 const labelCls = 'mb-1 block text-xs text-slate-500'
 
-export default function TaskForm({ initial, onDone }: Props) {
+export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
   const projects = useProjectsStore((s) => s.projects)
   const settings = useSettingsStore((s) => s.settings)
   const addTask = useTasksStore((s) => s.addTask)
@@ -91,7 +93,10 @@ export default function TaskForm({ initial, onDone }: Props) {
       })
     } else {
       task = addTask(base)
-      const { schedule: next } = insertTaskIncrementally(task, schedule, [...tasks, task], settings, new Date())
+      const { schedule: next } =
+        placeAtMinutes !== undefined
+          ? insertTaskAtTime(task, schedule, [...tasks, task], settings, new Date(), placeAtMinutes)
+          : insertTaskIncrementally(task, schedule, [...tasks, task], settings, new Date())
       setSchedule(next)
     }
     onDone()
@@ -102,6 +107,11 @@ export default function TaskForm({ initial, onDone }: Props) {
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      {placeAtMinutes !== undefined && (
+        <p className="rounded-lg bg-cyan-950/40 px-3 py-2 text-xs text-cyan-300">
+          ⏱ 将优先安排在 {minutesToHHmm(placeAtMinutes)} 开始(若该时段被占用则自动找最近的空闲时间)
+        </p>
+      )}
       <div>
         <label className={labelCls}>⚡ 一句话创建(可选,AI/本地解析后填入表单)</label>
         <div className="flex gap-2">

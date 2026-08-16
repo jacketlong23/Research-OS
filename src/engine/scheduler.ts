@@ -481,6 +481,50 @@ export function deleteSlot(schedule: Schedule, key: string, taskId: string, star
   return next
 }
 
+/**
+ * 在指定时刻"锚定"放置任务(点击时间轴空白的快速安排):
+ * 首块从 startMinutes 开始,剩余块增量补排;锚点冲突或放不下时整体退回增量插入。
+ */
+export function insertTaskAtTime(
+  task: Task,
+  schedule: Schedule,
+  tasks: Task[],
+  settings: Settings,
+  now: Date,
+  startMinutes: number,
+): { schedule: Schedule; anchored: boolean; placed: ScheduleSlot[] } {
+  const we = hhmmToMinutes(settings.work_end)
+  const chunks = splitChunks(
+    task.duration_minutes,
+    task.splittable,
+    task.minimum_block_minutes,
+    settings.deep_max_minutes,
+  )
+  const wantFirst = chunks[0]
+  const first = Math.min(wantFirst, we - startMinutes)
+  const key = dateKey(now)
+  const hard = fixedEventsOn(tasks, now).map((f) => ({ start: f.start, end: f.end }))
+  const existing = (schedule[key] ?? []).map((s) => ({ start: hhmmToMinutes(s.start), end: hhmmToMinutes(s.end) }))
+  const conflict = [...hard, ...existing].some((o) => startMinutes < o.end && startMinutes + first > o.start)
+  if (first < 15 || first < wantFirst || conflict) {
+    return { ...insertTaskIncrementally(task, schedule, tasks, settings, now), anchored: false }
+  }
+  const anchor: ScheduleSlot = {
+    taskId: task.id,
+    start: minutesToHHmm(startMinutes),
+    end: minutesToHHmm(startMinutes + first),
+  }
+  let next: Schedule = {
+    ...schedule,
+    [key]: [...(schedule[key] ?? []), anchor].sort((a, b) => hhmmToMinutes(a.start) - hhmmToMinutes(b.start)),
+  }
+  const remaining = task.duration_minutes - first
+  if (remaining > 0) {
+    next = insertTaskIncrementally({ ...task, duration_minutes: remaining }, next, tasks, settings, now).schedule
+  }
+  return { schedule: next, anchored: true, placed: [anchor] }
+}
+
 /** 删除某任务在所有日期的时间块(删除任务时用) */
 export function removeAllSlots(schedule: Schedule, taskId: string): Schedule {
   const next: Schedule = {}

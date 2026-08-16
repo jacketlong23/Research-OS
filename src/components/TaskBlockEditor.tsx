@@ -93,9 +93,9 @@ export default function TaskBlockEditor({ dateKey, taskId, slotStart, onClose }:
   const chunkLen = hhmmToMinutes(end) - hhmmToMinutes(start)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 animate-fade-in sm:items-center" onClick={onClose}>
       <div
-        className="w-full max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl"
+        className="w-full max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl animate-sheet-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">

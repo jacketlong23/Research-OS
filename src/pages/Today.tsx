@@ -28,6 +28,7 @@ export default function Today() {
   const now = useNow(30000)
   const todayKey = dateKey(now)
   const [showForm, setShowForm] = useState(false)
+  const [placeAt, setPlaceAt] = useState<number | undefined>(undefined)
   const [editing, setEditing] = useState<{ taskId: string; slotStart?: string } | null>(null)
   const [warnings, setWarnings] = useState<Warning[]>([])
   const autoRan = useRef(false)
@@ -75,7 +76,7 @@ export default function Today() {
   const nowOffset = ((Math.min(Math.max(mins, ws), we) - ws) * PX_PER_MIN)
 
   return (
-    <div className="space-y-4">
+    <div className="animate-fade-in space-y-4">
       {/* 顶部状态卡 */}
       <section className="rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/40 p-4">
         <div className="flex items-start justify-between">
@@ -145,8 +146,14 @@ export default function Today() {
           {showForm ? '收起新增任务' : '+ 新任务'}
         </button>
         {showForm && (
-          <div className="mt-3">
-            <TaskForm onDone={() => setShowForm(false)} />
+          <div className="mt-3 animate-sheet-in">
+            <TaskForm
+              placeAtMinutes={placeAt}
+              onDone={() => {
+                setShowForm(false)
+                setPlaceAt(undefined)
+              }}
+            />
           </div>
         )}
       </section>
@@ -156,12 +163,22 @@ export default function Today() {
         <h3 className="mb-3 text-sm font-semibold text-slate-300">
           今日时间轴{' '}
           <span className="ml-1 text-xs font-normal text-slate-500">
-            {settings.work_start}–{settings.work_end} · 点击时间块可编辑时间/名称
+            {settings.work_start}–{settings.work_end} · 点击时间块编辑 · 点击空白处在该时刻新建任务
           </span>
         </h3>
-        <div className="relative" style={{ height: (we - ws) * PX_PER_MIN }}>
+        <div
+          className="relative select-none"
+          style={{ height: (we - ws) * PX_PER_MIN }}
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            const raw = ws + (e.clientY - rect.top) / PX_PER_MIN
+            const snapped = Math.round(raw / 15) * 15
+            setPlaceAt(Math.min(Math.max(snapped, ws), we - 60))
+            setShowForm(true)
+          }}
+        >
           {hours.map((m) => (
-            <div key={m} className="absolute inset-x-0 flex items-center" style={{ top: (m - ws) * PX_PER_MIN }}>
+            <div key={m} className="pointer-events-none absolute inset-x-0 flex items-center" style={{ top: (m - ws) * PX_PER_MIN }}>
               <span className="-translate-y-2 w-12 shrink-0 text-right text-[10px] text-slate-600">{minutesToHHmm(m)}</span>
               <div className="ml-2 h-px flex-1 bg-slate-800/80" />
             </div>
@@ -169,9 +186,9 @@ export default function Today() {
 
           {/* 当前时间线 */}
           {mins >= ws && mins <= we && (
-            <div className="absolute inset-x-0 z-10 flex items-center" style={{ top: nowOffset }}>
+            <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: nowOffset }}>
               <span className="w-12 shrink-0 text-right text-[10px] font-bold text-rose-400">{minutesToHHmm(mins)}</span>
-              <div className="ml-1 h-1.5 w-1.5 rounded-full bg-rose-400" />
+              <div className="now-line-pulse ml-1 h-1.5 w-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.9)]" />
               <div className="h-px flex-1 bg-rose-500/70" />
             </div>
           )}
@@ -182,13 +199,14 @@ export default function Today() {
             return (
               <div
                 key={idx}
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation()
                   setEditing({
                     taskId: item.task.id,
                     slotStart: item.kind === 'flexible' ? minutesToHHmm(item.start) : undefined,
                   })
-                }
-                className={`absolute left-14 right-1 z-[5] cursor-pointer overflow-hidden rounded-lg border px-2 py-1 transition hover:brightness-125 ${c.block} ${
+                }}
+                className={`absolute left-14 right-1 z-[5] cursor-pointer overflow-hidden rounded-lg border px-2 py-1 transition-all duration-150 hover:brightness-125 hover:ring-1 hover:ring-white/40 active:scale-[0.98] active:brightness-150 ${c.block} ${
                   item.kind === 'fixed' ? 'border-dashed' : ''
                 } ${item.task.status === 'done' ? 'opacity-40' : ''}`}
                 style={{
