@@ -1,4 +1,5 @@
 import type { DailyLog, Project, Settings, Task, TaskType } from '../types'
+import { DEFAULT_SETTINGS } from '../types'
 import { addDays, dateKey, fmtDeadlineRelative } from '../lib/time'
 
 /**
@@ -15,6 +16,16 @@ export interface ParsedTask {
   type: TaskType
   blocking: boolean
   source: 'ai' | 'local'
+}
+
+/** 旧版本浏览器的空配置回退到内置默认(Key/模型/地址) */
+function effectiveSettings(settings: Settings): Settings {
+  return {
+    ...settings,
+    ai_api_key: settings.ai_api_key || DEFAULT_SETTINGS.ai_api_key,
+    ai_base_url: settings.ai_base_url || DEFAULT_SETTINGS.ai_base_url,
+    ai_model: settings.ai_model || DEFAULT_SETTINGS.ai_model,
+  }
 }
 
 async function chat(settings: Settings, system: string, user: string): Promise<string> {
@@ -50,6 +61,7 @@ export interface AITestResult {
 
 /** 发一条最小请求验证 AI 配置是否可用,失败时给出可读的原因提示 */
 export async function testAIConnection(settings: Settings): Promise<AITestResult> {
+  settings = effectiveSettings(settings)
   if (!settings.ai_base_url || !settings.ai_model) return { ok: false, message: '请先填写 Base URL 和模型名称' }
   if (!settings.ai_api_key) return { ok: false, message: '请先填写 API Key' }
   const t0 = Date.now()
@@ -136,6 +148,7 @@ function endOfDayOffset(now: Date, days: number): Date {
 }
 
 export async function parseTaskNL(text: string, settings: Settings, now: Date): Promise<ParsedTask> {
+  settings = effectiveSettings(settings)
   if (!settings.ai_api_key) return parseTaskLocal(text, now)
   try {
     const system = `你是科研时间管理助手的任务解析器。从用户的自然语言中提取一个任务,只输出 JSON,不要输出其他内容。
@@ -172,6 +185,7 @@ export async function explainRecommendation(
   now: Date,
 ): Promise<string> {
   if (top.length === 0) return '当前没有待安排的科研任务,可以先去任务页添加。'
+  settings = effectiveSettings(settings)
   const lines = top
     .map(
       (t, i) =>
@@ -228,6 +242,7 @@ ${nexts}
 }
 
 export async function draftBiweeklyReport(input: ReportInput, settings: Settings): Promise<string> {
+  settings = effectiveSettings(settings)
   if (!settings.ai_api_key) return reportLocalDraft(input)
   try {
     const facts = JSON.stringify(

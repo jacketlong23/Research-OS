@@ -155,7 +155,7 @@ export default function SettingsPage() {
           </button>
         </div>
         <p className="mb-3 text-[11px] text-slate-500">
-          只用于:自然语言建任务、优先级解释、半月报草稿。不配置 Key 时全部功能自动降级,不影响使用。Key 只保存在本机浏览器。
+          只用于:自然语言建任务、优先级解释、半月报草稿。已内置默认 Key 和模型,可直接点「测试连接」验证;也可换成自己的 Key 覆盖。
         </p>
         {testResult && (
           <p className={`mb-3 rounded-lg px-3 py-2 text-xs ${testResult.ok ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>

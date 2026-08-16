@@ -93,8 +93,8 @@ export const DEFAULT_SETTINGS: Settings = {
   deep_min_minutes: 90,
   deep_max_minutes: 150,
   ai_base_url: 'https://api.deepseek.com',
-  ai_model: 'deepseek-chat',
-  ai_api_key: '',
+  ai_model: 'deepseek-v4-flash',
+  ai_api_key: 'REMOVED_PERMANENTLY',
 }
 
 /** 临时任务的默认项目桶 */
