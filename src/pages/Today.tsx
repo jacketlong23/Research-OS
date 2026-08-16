@@ -13,6 +13,7 @@ import { colorClasses } from '../lib/colors'
 import { dateKey, fmtCnDate, fmtDeadlineRelative, fmtDuration, hhmmToMinutes, minutesOfDay, minutesToHHmm } from '../lib/time'
 import { useNow } from '../lib/useNow'
 import TaskForm from '../components/TaskForm'
+import TaskBlockEditor from '../components/TaskBlockEditor'
 
 const PX_PER_MIN = 1.15
 
@@ -27,6 +28,7 @@ export default function Today() {
   const now = useNow(30000)
   const todayKey = dateKey(now)
   const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<{ taskId: string; slotStart?: string } | null>(null)
   const [warnings, setWarnings] = useState<Warning[]>([])
   const autoRan = useRef(false)
 
@@ -152,7 +154,10 @@ export default function Today() {
       {/* 时间轴 */}
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
         <h3 className="mb-3 text-sm font-semibold text-slate-300">
-          今日时间轴 <span className="ml-1 text-xs text-slate-500">{settings.work_start}–{settings.work_end}</span>
+          今日时间轴{' '}
+          <span className="ml-1 text-xs font-normal text-slate-500">
+            {settings.work_start}–{settings.work_end} · 点击时间块可编辑时间/名称
+          </span>
         </h3>
         <div className="relative" style={{ height: (we - ws) * PX_PER_MIN }}>
           {hours.map((m) => (
@@ -177,23 +182,32 @@ export default function Today() {
             return (
               <div
                 key={idx}
-                className={`absolute left-14 right-1 z-[5] overflow-hidden rounded-lg border px-2 py-1 ${c.block} ${
+                onClick={() =>
+                  setEditing({
+                    taskId: item.task.id,
+                    slotStart: item.kind === 'flexible' ? minutesToHHmm(item.start) : undefined,
+                  })
+                }
+                className={`absolute left-14 right-1 z-[5] cursor-pointer overflow-hidden rounded-lg border px-2 py-1 transition hover:brightness-125 ${c.block} ${
                   item.kind === 'fixed' ? 'border-dashed' : ''
                 } ${item.task.status === 'done' ? 'opacity-40' : ''}`}
                 style={{
                   top: (item.start - ws) * PX_PER_MIN + 1,
                   height: Math.max((item.end - item.start) * PX_PER_MIN - 2, 18),
                 }}
-                title={`${item.task.title} ${minutesToHHmm(item.start)}–${minutesToHHmm(item.end)}`}
+                title={`${item.task.title} ${minutesToHHmm(item.start)}–${minutesToHHmm(item.end)}(点击编辑)`}
               >
                 <div className="flex items-center justify-between gap-1">
                   <p className="truncate text-xs font-medium leading-4">
-                    {item.kind === 'fixed' ? '📌 ' : ''}
+                    {item.kind === 'fixed' && '📌 '}
                     {item.task.title}
                   </p>
                   {item.kind === 'flexible' && item.task.status !== 'done' && (
                     <button
-                      onClick={() => completeTask(item.task.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        completeTask(item.task.id)
+                      }}
                       className="shrink-0 rounded px-1 text-[11px] text-slate-400 hover:bg-white/10 hover:text-emerald-300"
                       title="标记完成"
                     >
@@ -241,6 +255,15 @@ export default function Today() {
               ))}
           </ul>
         </section>
+      )}
+
+      {editing && (
+        <TaskBlockEditor
+          dateKey={todayKey}
+          taskId={editing.taskId}
+          slotStart={editing.slotStart}
+          onClose={() => setEditing(null)}
+        />
       )}
     </div>
   )

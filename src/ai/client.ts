@@ -41,6 +41,34 @@ async function chat(settings: Settings, system: string, user: string): Promise<s
   return content
 }
 
+// ---------- 连接测试 ----------
+
+export interface AITestResult {
+  ok: boolean
+  message: string
+}
+
+/** 发一条最小请求验证 AI 配置是否可用,失败时给出可读的原因提示 */
+export async function testAIConnection(settings: Settings): Promise<AITestResult> {
+  if (!settings.ai_base_url || !settings.ai_model) return { ok: false, message: '请先填写 Base URL 和模型名称' }
+  if (!settings.ai_api_key) return { ok: false, message: '请先填写 API Key' }
+  const t0 = Date.now()
+  try {
+    const reply = await chat(settings, '你是连通性测试器,只输出要求的单词,不要任何其他内容。', '请回复:pong')
+    return { ok: true, message: `连接成功:${settings.ai_model} · ${Date.now() - t0} ms · 回复「${reply.trim().slice(0, 20)}」` }
+  } catch (e) {
+    const raw = e instanceof Error ? e.message : String(e)
+    let hint = raw
+    if (/HTTP 40[13]/.test(raw)) hint = '认证失败(HTTP 401/403):API Key 无效或没有权限'
+    else if (/HTTP 404/.test(raw)) hint = '接口不存在(HTTP 404):检查 Base URL 拼写(DeepSeek 为 https://api.deepseek.com)'
+    else if (/HTTP 400/.test(raw)) hint = '请求被拒绝(HTTP 400):通常是模型名称不正确'
+    else if (/HTTP 429/.test(raw)) hint = '请求过于频繁(HTTP 429):余额不足或触发限流,稍后再试'
+    else if (/Failed to fetch|NetworkError|load failed/i.test(raw))
+      hint = '网络错误:无法访问 Base URL(检查网络/地址拼写;若网络正常,可能是该接口不允许浏览器跨域调用)'
+    return { ok: false, message: hint }
+  }
+}
+
 function extractJson(text: string): Record<string, unknown> | null {
   const match = text.match(/\{[\s\S]*\}/)
   if (!match) return null

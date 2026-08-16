@@ -422,3 +422,71 @@ export function moveTaskDay(
   next[toKey] = [...target, ...moving].sort((x, y) => hhmmToMinutes(x.start) - hhmmToMinutes(y.start))
   return next
 }
+
+/** 某天与 [a,b](分钟) 重叠的其他安排,返回描述文字;无冲突返回 null */
+export function findConflict(
+  tasks: Task[],
+  schedule: Schedule,
+  key: string,
+  excludeTaskId: string | null,
+  a: number,
+  b: number,
+): string | null {
+  if (b <= a) return null
+  for (const f of fixedEventsOn(tasks, parseDateKey(key))) {
+    if (f.task.id === excludeTaskId) continue
+    if (a < f.end && b > f.start) return `固定事件「${f.task.title}」${minutesToHHmm(f.start)}–${minutesToHHmm(f.end)}`
+  }
+  for (const s of schedule[key] ?? []) {
+    if (s.taskId === excludeTaskId) continue
+    const sa = hhmmToMinutes(s.start)
+    const sb = hhmmToMinutes(s.end)
+    if (a < sb && b > sa) {
+      const t = tasks.find((x) => x.id === s.taskId)
+      return `「${t?.title ?? s.taskId}」${s.start}–${s.end}`
+    }
+  }
+  return null
+}
+
+/** 手动修改某天的一个时间块;时间非法或与其他安排冲突时返回 null */
+export function updateSlot(
+  schedule: Schedule,
+  key: string,
+  taskId: string,
+  oldStart: string,
+  newStart: string,
+  newEnd: string,
+  tasks: Task[],
+): Schedule | null {
+  const slots = schedule[key] ?? []
+  const idx = slots.findIndex((s) => s.taskId === taskId && s.start === oldStart)
+  if (idx < 0) return null
+  const a = hhmmToMinutes(newStart)
+  const b = hhmmToMinutes(newEnd)
+  if (b <= a) return null
+  if (findConflict(tasks, schedule, key, taskId, a, b)) return null
+  const copy = slots.slice()
+  copy[idx] = { taskId, start: newStart, end: newEnd }
+  copy.sort((x, y) => hhmmToMinutes(x.start) - hhmmToMinutes(y.start))
+  return { ...schedule, [key]: copy }
+}
+
+/** 删除某天某任务的一个时间块 */
+export function deleteSlot(schedule: Schedule, key: string, taskId: string, start: string): Schedule {
+  const slots = (schedule[key] ?? []).filter((s) => !(s.taskId === taskId && s.start === start))
+  const next: Schedule = { ...schedule }
+  if (slots.length > 0) next[key] = slots
+  else delete next[key]
+  return next
+}
+
+/** 删除某任务在所有日期的时间块(删除任务时用) */
+export function removeAllSlots(schedule: Schedule, taskId: string): Schedule {
+  const next: Schedule = {}
+  for (const [k, slots] of Object.entries(schedule)) {
+    const filtered = slots.filter((s) => s.taskId !== taskId)
+    if (filtered.length > 0) next[k] = filtered
+  }
+  return next
+}

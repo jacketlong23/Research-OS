@@ -4,6 +4,7 @@ import { dayTimeline, moveTaskDay } from '../engine/scheduler'
 import { colorClasses } from '../lib/colors'
 import { addDays, dateKey, fmtCnDate, hhmmToMinutes, minutesToHHmm, startOfWeek, WEEKDAY_NAMES } from '../lib/time'
 import { useNow } from '../lib/useNow'
+import TaskBlockEditor from '../components/TaskBlockEditor'
 
 const PX_PER_MIN = 0.9
 
@@ -17,6 +18,7 @@ export default function Week() {
   const now = useNow(60000)
   const [weekOffset, setWeekOffset] = useState(0)
   const [dragOver, setDragOver] = useState<string | null>(null)
+  const [editing, setEditing] = useState<{ dateKey: string; taskId: string; slotStart?: string } | null>(null)
 
   const weekStart = addDays(startOfWeek(now), weekOffset * 7)
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -63,7 +65,9 @@ export default function Week() {
           下一周 →
         </button>
       </div>
-      <p className="text-xs text-slate-500">拖拽时间块可以把它移动到其他日期;虚线框为固定事件,旗标 ⚑ 为该日截止的任务。</p>
+      <p className="text-xs text-slate-500">
+        点击时间块可编辑时间/名称;拖拽可移动到其他日期;虚线框为固定事件;旗标 ⚑ 为该日截止的任务。
+      </p>
 
       <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 p-3">
         <div className="flex min-w-[760px]">
@@ -141,16 +145,23 @@ export default function Week() {
                           e.dataTransfer.setData('text/fromKey', key)
                           e.dataTransfer.effectAllowed = 'move'
                         }}
-                        className={`absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 ${c.block} ${
+                        onClick={() =>
+                          setEditing({
+                            dateKey: key,
+                            taskId: item.task.id,
+                            slotStart: item.kind === 'flexible' ? minutesToHHmm(item.start) : undefined,
+                          })
+                        }
+                        className={`absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 transition hover:brightness-125 ${c.block} ${
                           item.kind === 'fixed' ? 'border-dashed' : ''
-                        } ${draggable ? 'cursor-grab active:cursor-grabbing' : ''} ${
+                        } ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
                           item.task.status === 'done' ? 'opacity-40' : ''
                         }`}
                         style={{
                           top: (item.start - ws) * PX_PER_MIN + 1,
                           height: Math.max((item.end - item.start) * PX_PER_MIN - 2, 14),
                         }}
-                        title={`${item.task.title} ${minutesToHHmm(item.start)}–${minutesToHHmm(item.end)}`}
+                        title={`${item.task.title} ${minutesToHHmm(item.start)}–${minutesToHHmm(item.end)}(点击编辑,拖拽移动)`}
                       >
                         <p className="truncate text-[10px] font-medium leading-3.5">{item.task.title}</p>
                         {item.end - item.start >= 60 && (
@@ -165,6 +176,15 @@ export default function Week() {
           })}
         </div>
       </div>
+
+      {editing && (
+        <TaskBlockEditor
+          dateKey={editing.dateKey}
+          taskId={editing.taskId}
+          slotStart={editing.slotStart}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   )
 }

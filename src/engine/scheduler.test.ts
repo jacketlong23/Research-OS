@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest'
 import type { Schedule, Settings, Task } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 import {
+  deleteSlot,
+  findConflict,
   freeGaps,
   insertTaskIncrementally,
+  removeAllSlots,
   reschedule,
   splitChunks,
   topTasks,
+  updateSlot,
 } from './scheduler'
 import { scoreTask } from './score'
 import { dateKey } from '../lib/time'
@@ -187,6 +191,57 @@ describe('insertTaskIncrementally', () => {
     expect(placed).toEqual([{ taskId: 'b', start: '09:00', end: '11:00' }])
     expect(schedule[TODAY]).toBeUndefined()
     expect(slotTimes(schedule, TOMORROW)).toEqual([['09:00', '11:00']])
+  })
+})
+
+describe('slot 手动编辑', () => {
+  const a = flexTask({ id: 'a', duration_minutes: 60 })
+  const b = flexTask({ id: 'b', title: '任务B', duration_minutes: 60 })
+  const sched: Schedule = {
+    [TODAY]: [
+      { taskId: 'a', start: '09:00', end: '10:00' },
+      { taskId: 'b', start: '10:00', end: '11:00' },
+    ],
+  }
+
+  it('updateSlot 修改时间块并按开始时间排序', () => {
+    const next = updateSlot(sched, TODAY, 'a', '09:00', '13:00', '14:30', [a, b])
+    expect(next).not.toBeNull()
+    expect(next![TODAY].map((s) => [s.taskId, s.start, s.end])).toEqual([
+      ['b', '10:00', '11:00'],
+      ['a', '13:00', '14:30'],
+    ])
+  })
+
+  it('updateSlot 与其他安排冲突时返回 null', () => {
+    expect(updateSlot(sched, TODAY, 'a', '09:00', '10:30', '11:30', [a, b])).toBeNull()
+  })
+
+  it('updateSlot 需避开 fixed 事件', () => {
+    const fixed = fixedToday('12:00', '13:00')
+    expect(updateSlot(sched, TODAY, 'a', '09:00', '12:30', '13:30', [a, b, fixed])).toBeNull()
+    expect(updateSlot(sched, TODAY, 'a', '09:00', '11:00', '12:00', [a, b, fixed])).not.toBeNull()
+  })
+
+  it('findConflict 返回冲突块描述,无冲突为 null', () => {
+    expect(findConflict([a, b], sched, TODAY, 'a', 9 * 60 + 30, 10 * 60 + 30)).toContain('任务B')
+    expect(findConflict([a, b], sched, TODAY, 'a', 11 * 60, 12 * 60)).toBeNull()
+  })
+
+  it('deleteSlot 只删指定的块', () => {
+    const next = deleteSlot(sched, TODAY, 'a', '09:00')
+    expect(next[TODAY]).toEqual([{ taskId: 'b', start: '10:00', end: '11:00' }])
+    expect(sched[TODAY].length).toBe(2) // 原对象不变
+  })
+
+  it('removeAllSlots 清理所有日期的该任务', () => {
+    const multi: Schedule = {
+      [TODAY]: sched[TODAY],
+      [TOMORROW]: [{ taskId: 'a', start: '09:00', end: '10:00' }],
+    }
+    const next = removeAllSlots(multi, 'a')
+    expect(next[TODAY].length).toBe(1)
+    expect(next[TOMORROW]).toBeUndefined()
   })
 })
 

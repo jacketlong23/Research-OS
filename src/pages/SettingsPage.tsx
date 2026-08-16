@@ -8,6 +8,7 @@ import {
   useTasksStore,
   resetToSeed,
 } from '../store'
+import { testAIConnection, type AITestResult } from '../ai/client'
 
 const inputCls =
   'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
@@ -47,6 +48,16 @@ export default function SettingsPage() {
   const update = useSettingsStore((s) => s.update)
   const fileRef = useRef<HTMLInputElement>(null)
   const [msg, setMsg] = useState('')
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<AITestResult | null>(null)
+
+  const runTest = async () => {
+    setTesting(true)
+    setTestResult(null)
+    const r = await testAIConnection(settings)
+    setTestResult(r)
+    setTesting(false)
+  }
 
   const importData = async (file: File) => {
     try {
@@ -133,10 +144,25 @@ export default function SettingsPage() {
 
       {/* AI 配置 */}
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">🤖 AI 配置(OpenAI 兼容接口)</h3>
+        <div className="mb-1 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-300">🤖 AI 配置(OpenAI 兼容接口)</h3>
+          <button
+            onClick={runTest}
+            disabled={testing}
+            className="rounded-lg border border-cyan-700 bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-300 transition hover:bg-cyan-900/50 disabled:opacity-50"
+          >
+            {testing ? '测试中…' : '🔌 测试连接'}
+          </button>
+        </div>
         <p className="mb-3 text-[11px] text-slate-500">
           只用于:自然语言建任务、优先级解释、半月报草稿。不配置 Key 时全部功能自动降级,不影响使用。Key 只保存在本机浏览器。
         </p>
+        {testResult && (
+          <p className={`mb-3 rounded-lg px-3 py-2 text-xs ${testResult.ok ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>
+            {testResult.ok ? '✅ ' : '❌ '}
+            {testResult.message}
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Base URL</label>
