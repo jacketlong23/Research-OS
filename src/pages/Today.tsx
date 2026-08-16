@@ -12,6 +12,7 @@ import {
 import { colorClasses } from '../lib/colors'
 import { dateKey, fmtCnDate, fmtDeadlineRelative, fmtDuration, hhmmToMinutes, minutesOfDay, minutesToHHmm } from '../lib/time'
 import { useNow } from '../lib/useNow'
+import { explainRecommendation } from '../ai/client'
 import TaskForm from '../components/TaskForm'
 import TaskBlockEditor from '../components/TaskBlockEditor'
 
@@ -31,6 +32,8 @@ export default function Today() {
   const [placeAt, setPlaceAt] = useState<number | undefined>(undefined)
   const [editing, setEditing] = useState<{ taskId: string; slotStart?: string } | null>(null)
   const [warnings, setWarnings] = useState<Warning[]>([])
+  const [explanation, setExplanation] = useState('')
+  const [explaining, setExplaining] = useState(false)
   const autoRan = useRef(false)
 
   // 首次打开且今天还没有任何安排时,自动智能排程一次
@@ -63,6 +66,13 @@ export default function Today() {
     const r = reschedule(tasks, projects, schedule, settings, now)
     setSchedule(r.schedule)
     setWarnings(r.warnings)
+  }
+
+  const handleExplain = async () => {
+    setExplaining(true)
+    setExplanation('')
+    setExplanation(await explainRecommendation(big3, settings, now))
+    setExplaining(false)
   }
 
   const completeTask = (taskId: string) => {
@@ -115,25 +125,43 @@ export default function Today() {
 
       {/* Big 3 */}
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-2 text-sm font-semibold text-slate-300">🎯 Today&apos;s Big 3</h3>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-300">🎯 Today&apos;s Big 3</h3>
+          {big3.length > 0 && (
+            <button
+              onClick={handleExplain}
+              disabled={explaining}
+              className="rounded-lg border border-cyan-700 bg-cyan-950/50 px-2.5 py-1 text-xs text-cyan-300 transition hover:bg-cyan-900/50 disabled:opacity-50"
+            >
+              {explaining ? 'AI 解读中…' : '🤖 AI 解读'}
+            </button>
+          )}
+        </div>
         {big3.length === 0 ? (
           <p className="text-sm text-slate-500">没有待安排的科研任务,去任务页添加吧。</p>
         ) : (
-          <ol className="space-y-1.5">
-            {big3.map((t, i) => {
-              const c = colorClasses(projectOf(t.project_id)?.color)
-              return (
-                <li key={t.id} className="flex items-center gap-2 text-sm">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[11px] font-bold text-slate-400">
-                    {i + 1}
-                  </span>
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${c.dot}`} title={projectOf(t.project_id)?.name ?? '收件箱'} />
-                  <span className="min-w-0 flex-1 truncate text-slate-200">{t.title}</span>
-                  <span className="shrink-0 text-xs text-slate-500">{fmtDeadlineRelative(t.deadline, now)}</span>
-                </li>
-              )
-            })}
-          </ol>
+          <>
+            <ol className="space-y-1.5">
+              {big3.map((t, i) => {
+                const c = colorClasses(projectOf(t.project_id)?.color)
+                return (
+                  <li key={t.id} className="flex items-center gap-2 text-sm">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[11px] font-bold text-slate-400">
+                      {i + 1}
+                    </span>
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${c.dot}`} title={projectOf(t.project_id)?.name ?? '收件箱'} />
+                    <span className="min-w-0 flex-1 truncate text-slate-200">{t.title}</span>
+                    <span className="shrink-0 text-xs text-slate-500">{fmtDeadlineRelative(t.deadline, now)}</span>
+                  </li>
+                )
+              })}
+            </ol>
+            {explanation && (
+              <div className="animate-fade-in mt-3 whitespace-pre-wrap rounded-lg border border-cyan-900/40 bg-cyan-950/20 p-3 text-xs leading-5 text-slate-300">
+                {explanation}
+              </div>
+            )}
+          </>
         )}
       </section>
 

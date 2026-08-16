@@ -64,7 +64,13 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
     setImportance(parsed.importance)
     setType(parsed.type)
     setBlocking(parsed.blocking)
-    setParseHint(parsed.source === 'ai' ? 'AI 解析结果已填入,请确认' : '本地解析结果已填入,请确认')
+    setParseHint(
+      parsed.source === 'ai'
+        ? '✨ AI 解析结果已填入,请确认'
+        : parsed.error
+          ? `⚠ AI 调用失败(${parsed.error}),已用本地规则解析`
+          : '本地规则解析结果已填入,请确认',
+    )
     setParsing(false)
   }
 

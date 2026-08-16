@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useDailyLogsStore, useProjectsStore, useSettingsStore, useTasksStore } from '../store'
-import { draftBiweeklyReport } from '../ai/client'
+import { draftBiweeklyReport, effectiveSettings } from '../ai/client'
 import { addDays, dateKey, fmtDuration, startOfWeek } from '../lib/time'
 import { useNow } from '../lib/useNow'
 
@@ -159,14 +159,15 @@ export default function Review() {
           </span>
         </div>
         <p className="mb-3 text-[11px] text-slate-500">
-          汇总本期完成任务、项目进度与 Daily Log{settings.ai_api_key ? ',AI 生成' : ',本地模板生成(配置 AI Key 后更完整)'}。
+          汇总本期完成任务、项目进度与 Daily Log
+          {effectiveSettings(settings).ai_api_key ? ',AI 生成(约需十几秒)' : ',本地模板生成(配置 AI Key 后更完整)'}。
         </p>
         <button
           onClick={generate}
           disabled={generating}
           className="mb-3 w-full rounded-lg border border-violet-700 bg-violet-950/50 py-2 text-sm text-violet-300 transition hover:bg-violet-900/50 disabled:opacity-50"
         >
-          {generating ? '生成中…' : '生成半月报草稿'}
+          {generating ? '生成中,请稍候…' : '生成半月报草稿'}
         </button>
         {report && (
           <div className="space-y-2">

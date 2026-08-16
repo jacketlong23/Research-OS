@@ -16,10 +16,12 @@ export interface ParsedTask {
   type: TaskType
   blocking: boolean
   source: 'ai' | 'local'
+  /** source 为 local 且配置了 AI 时,记录 AI 调用失败的原因 */
+  error?: string
 }
 
 /** 旧版本浏览器的空配置回退到内置默认(Key/模型/地址) */
-function effectiveSettings(settings: Settings): Settings {
+export function effectiveSettings(settings: Settings): Settings {
   return {
     ...settings,
     ai_api_key: settings.ai_api_key || DEFAULT_SETTINGS.ai_api_key,
@@ -30,20 +32,24 @@ function effectiveSettings(settings: Settings): Settings {
 
 async function chat(settings: Settings, system: string, user: string): Promise<string> {
   const base = settings.ai_base_url.replace(/\/+$/, '')
+  // DeepSeek 推理模型默认先思考再回答(任务解析要 10-20 秒),
+  // 这里的都是简单结构化任务,关闭思考后 1-2 秒返回;其他兼容接口不认识该参数会报错,故仅对 DeepSeek 生效
+  const body: Record<string, unknown> = {
+    model: settings.ai_model,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+    temperature: 0.3,
+  }
+  if (/deepseek/i.test(base)) body.thinking = { type: 'disabled' }
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${settings.ai_api_key}`,
     },
-    body: JSON.stringify({
-      model: settings.ai_model,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      temperature: 0.3,
-    }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`AI 请求失败(HTTP ${res.status})`)
   const data = (await res.json()) as { choices?: { message?: { content?: string } }[] }
@@ -161,7 +167,7 @@ export async function parseTaskNL(text: string, settings: Settings, now: Date): 
 - blocking: 该任务是否阻塞后续工作,布尔值`
     const content = await chat(settings, system, `当前时间:${now.toISOString()}\n用户输入:${text}`)
     const json = extractJson(content)
-    if (!json) return parseTaskLocal(text, now)
+    if (!json) return { ...parseTaskLocal(text, now), error: 'AI 返回内容中未找到 JSON' }
     const rawDeadline = typeof json.deadline === 'string' && json.deadline ? json.deadline : null
     return {
       title: String(json.title ?? '').slice(0, 40) || text.slice(0, 20),
@@ -172,8 +178,8 @@ export async function parseTaskNL(text: string, settings: Settings, now: Date): 
       blocking: Boolean(json.blocking),
       source: 'ai',
     }
-  } catch {
-    return parseTaskLocal(text, now)
+  } catch (e) {
+    return { ...parseTaskLocal(text, now), error: e instanceof Error ? e.message : String(e) }
   }
 }
 
