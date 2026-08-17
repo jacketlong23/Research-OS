@@ -20,11 +20,11 @@ export interface ParsedTask {
   error?: string
 }
 
-/** 旧版本浏览器的空配置回退到内置默认(Key/模型/地址) */
+/** 空配置回退默认值(仅地址/模型;API Key 不内置,由用户在设置页填写) */
 export function effectiveSettings(settings: Settings): Settings {
   return {
     ...settings,
-    ai_api_key: settings.ai_api_key || DEFAULT_SETTINGS.ai_api_key,
+    ai_api_key: settings.ai_api_key,
     ai_base_url: settings.ai_base_url || DEFAULT_SETTINGS.ai_base_url,
     ai_model: settings.ai_model || DEFAULT_SETTINGS.ai_model,
   }
@@ -79,7 +79,7 @@ export interface AITestResult {
 /** 把原始错误信息翻译成用户可操作的中文提示 */
 export function friendlyAIError(raw: string): string {
   if (/HTTP 402/i.test(raw))
-    return '余额不足(HTTP 402):内置演示 Key 的额度已耗尽,请在「设置 → AI 配置」填入自己的 API Key(或给演示 Key 充值)'
+    return '余额不足(HTTP 402):账户额度已耗尽,请在「设置 → AI 配置」更换或充值自己的 API Key'
   if (/HTTP 40[13]/.test(raw)) return '认证失败(HTTP 401/403):API Key 无效或没有权限'
   if (/HTTP 404/.test(raw)) return '接口不存在(HTTP 404):检查 Base URL 拼写(DeepSeek 为 https://api.deepseek.com)'
   if (/HTTP 400/.test(raw))

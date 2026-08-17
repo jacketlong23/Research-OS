@@ -1,5 +1,6 @@
 import type { Project, Settings, Task } from '../types'
-import { hhmmToMinutes } from '../lib/time'
+import { minutesOfDay } from '../lib/time'
+import { enabledWorkIntervals } from '../lib/workPeriods'
 
 /**
  * 优先级评分(构想 §10):
@@ -27,26 +28,32 @@ function urgency(deadline: string | null, now: Date): number {
   return clamp01(1 - days / 3)
 }
 
-/** 截止前(工作时间窗口内的)可用分钟数 */
+/** 截止前(启用工作时段内的)可用分钟数 */
 export function workMinutesUntil(deadline: string, settings: Settings, now: Date): number {
   const dl = new Date(deadline)
-  const winLen = hhmmToMinutes(settings.work_end) - hhmmToMinutes(settings.work_start)
+  if (dl.getTime() <= now.getTime()) return 0
+  const windows = enabledWorkIntervals(settings)
+  const totalWin = windows.reduce((a, w) => a + (w.end - w.start), 0)
+  const nowKey = dateKeyOf(now)
+  const dlKey = dateKeyOf(dl)
+  const dlMin = dl.getHours() * 60 + dl.getMinutes()
+  const nowMin = minutesOfDay(now)
   let total = 0
   const cursor = new Date(now)
-  while (dateKeyOf(cursor) <= dateKeyOf(dl)) {
-    const sameDay = dateKeyOf(cursor) === dateKeyOf(dl)
-    if (sameDay) {
-      // 截止时刻已过:当天不再有可用时间(此前误从 0 点起算,导致过期任务的截止风险被低估)
-      if (cursor.getTime() < dl.getTime()) {
-        const dlMin = dl.getHours() * 60 + dl.getMinutes()
-        const start = Math.max(hhmmToMinutes(settings.work_start), now.getHours() * 60 + now.getMinutes())
-        total += Math.max(0, Math.min(dlMin, hhmmToMinutes(settings.work_end)) - start)
-      }
-    } else if (dateKeyOf(cursor) === dateKeyOf(now)) {
-      // 今天剩余
-      total += Math.max(0, hhmmToMinutes(settings.work_end) - Math.max(hhmmToMinutes(settings.work_start), now.getHours() * 60 + now.getMinutes()))
+  while (dateKeyOf(cursor) <= dlKey) {
+    const key = dateKeyOf(cursor)
+    if (key === dlKey) {
+      // 截止日:从时段开始(若当天即今天则从当前时刻)算到截止时刻为止
+      const startMin = key === nowKey ? nowMin : -1
+      total += windows.reduce(
+        (a, w) => a + Math.max(0, Math.min(dlMin, w.end) - Math.max(w.start, startMin)),
+        0,
+      )
+    } else if (key === nowKey) {
+      // 今天剩余:从当前时刻到各时段结束
+      total += windows.reduce((a, w) => a + Math.max(0, w.end - Math.max(w.start, nowMin)), 0)
     } else {
-      total += Math.max(0, winLen)
+      total += totalWin
     }
     cursor.setDate(cursor.getDate() + 1)
   }

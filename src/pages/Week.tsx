@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useProjectsStore, useScheduleStore, useSettingsStore, useTasksStore } from '../store'
 import { dayTimeline, moveTaskDay } from '../engine/scheduler'
 import { colorClasses } from '../lib/colors'
-import { addDays, dateKey, fmtCnDate, hhmmToMinutes, minutesToHHmm, startOfWeek, WEEKDAY_NAMES } from '../lib/time'
+import { addDays, dateKey, fmtCnDate, minutesToHHmm, startOfWeek, WEEKDAY_NAMES } from '../lib/time'
+import { workDayBounds } from '../lib/workPeriods'
 import { useNow } from '../lib/useNow'
 import TaskBlockEditor from '../components/TaskBlockEditor'
 
@@ -24,8 +25,7 @@ export default function Week() {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const todayKey = dateKey(now)
 
-  const ws = hhmmToMinutes(settings.work_start)
-  const we = hhmmToMinutes(settings.work_end)
+  const { start: ws, end: we } = workDayBounds(settings)
   const hours: number[] = []
   for (let h = Math.floor(ws / 60); h <= Math.floor(we / 60); h++) hours.push(h * 60)
 

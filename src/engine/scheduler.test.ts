@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Schedule, Settings, Task } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 import {
+  dayCapacity,
   deleteSlot,
   findConflict,
   freeGaps,
@@ -14,7 +15,7 @@ import {
   updateSlot,
 } from './scheduler'
 import { scoreTask } from './score'
-import { dateKey } from '../lib/time'
+import { dateKey, hhmmToMinutes } from '../lib/time'
 
 // 2026-08-12 是周三;08:00 在工作时间开始前,一整天可用
 const NOW = new Date(2026, 7, 12, 8, 0)
@@ -70,12 +71,12 @@ describe('splitChunks', () => {
 })
 
 describe('freeGaps', () => {
-  it('避开 fixed 事件并裁掉今天已过去的时间', () => {
+  it('避开 fixed 事件并裁掉今天已过去的时间,且只返回启用时段内的空隙', () => {
     const now = new Date(2026, 7, 12, 10, 0) // 10:00
     const gaps = freeGaps(NOW, [{ start: 660, end: 720 }], SETTINGS, now) // 11:00-12:00
     expect(gaps).toEqual([
-      { start: 600, end: 660 }, // 10:00-11:00
-      { start: 720, end: 1230 }, // 12:00-20:30
+      { start: 600, end: 660 }, // 10:00-11:00(上午时段内,避开 11:00 后的 fixed)
+      { start: 840, end: 1050 }, // 14:00-17:30(下午时段;午休 11:30-14:00 天然不出现)
     ])
   })
 })
@@ -112,12 +113,12 @@ describe('reschedule', () => {
     expect(slotTimes(schedule, TODAY)).toEqual([['09:00', '11:00']])
   })
 
-  it('可拆任务拆成两块且块间留 15 分钟缓冲', () => {
+  it('可拆任务拆成两块,且不会跨越午休', () => {
     const task = flexTask({ duration_minutes: 200, splittable: true, minimum_block_minutes: 30 })
     const { schedule } = reschedule([task], [], {}, SETTINGS, NOW)
     expect(slotTimes(schedule, TODAY)).toEqual([
       ['09:00', '10:40'],
-      ['10:55', '12:35'],
+      ['14:00', '15:40'], // 第二块顺延到下午,不跨 11:30-14:00 午休
     ])
   })
 
@@ -139,10 +140,10 @@ describe('reschedule', () => {
   })
 
   it('受 fill_ratio 限制,放不下的任务顺延到第二天', () => {
-    const a = flexTask({ duration_minutes: 300 })
-    const b = flexTask({ duration_minutes: 300 })
+    const a = flexTask({ duration_minutes: 150 })
+    const b = flexTask({ duration_minutes: 150 })
     const { schedule } = reschedule([a, b], [], {}, SETTINGS, NOW)
-    // 690min × 0.78 ≈ 538min,一天只装得下一个 300min 任务
+    // 启用时段总长 360min × 0.78 ≈ 281min,一天只装得下一个 150min 任务
     expect((schedule[TODAY] ?? []).length).toBe(1)
     expect((schedule[TOMORROW] ?? []).length).toBe(1)
     const ids = [...(schedule[TODAY] ?? []), ...(schedule[TOMORROW] ?? [])].map((s) => s.taskId)
@@ -150,14 +151,13 @@ describe('reschedule', () => {
   })
 
   it('预计完成超过截止时间时给出警告', () => {
-    const fixed = fixedToday('09:00', '17:00')
     const task = flexTask({
-      duration_minutes: 120,
-      deadline: new Date(2026, 7, 12, 18, 0).toISOString(),
+      duration_minutes: 90,
+      deadline: new Date(2026, 7, 12, 10, 0).toISOString(), // 今天 10:00 截止
     })
-    const { schedule, warnings } = reschedule([fixed, task], [], {}, SETTINGS, NOW)
-    // 唯一空隙 17:00-20:30,排 17:00-19:00,晚于 18:00 截止
-    expect(slotTimes(schedule, TODAY)).toEqual([['17:00', '19:00']])
+    const { schedule, warnings } = reschedule([task], [], {}, SETTINGS, NOW)
+    // 上午 09:00-10:30,晚于 10:00 截止
+    expect(slotTimes(schedule, TODAY)).toEqual([['09:00', '10:30']])
     expect(warnings.some((w) => w.taskId === task.id && w.message.includes('超过截止'))).toBe(true)
   })
 
@@ -188,7 +188,8 @@ describe('insertTaskIncrementally', () => {
     }
     const b = flexTask({ id: 'b', duration_minutes: 60 })
     const { schedule, placed } = insertTaskIncrementally(b, existing, [b], SETTINGS, NOW)
-    expect(placed).toEqual([{ taskId: 'b', start: '11:15', end: '12:15' }])
+    // 上午剩余 11:00-11:30 只有 30 分钟放不下 60 分钟,顺延到下午 14:00
+    expect(placed).toEqual([{ taskId: 'b', start: '14:00', end: '15:00' }])
     expect(schedule[TODAY].some((s) => s.taskId === 'a' && s.start === '09:00' && s.end === '11:00')).toBe(true)
   })
 
@@ -294,5 +295,73 @@ describe('topTasks', () => {
     const low2 = flexTask({ id: 'low2' })
     const top = topTasks([low, urgent, mid, low2], [], SETTINGS, NOW, 3)
     expect(top.map((t) => t.id)).toEqual(['urgent', 'mid', 'low'])
+  })
+})
+
+describe('多工作时段', () => {
+  const LUNCH_START = hhmmToMinutes('11:30') // 690
+  const LUNCH_END = hhmmToMinutes('14:00') // 840
+  const AFTERNOON_END = hhmmToMinutes('17:30') // 1050
+
+  const eveningEnabled = (): Settings => ({
+    ...SETTINGS,
+    work_periods: SETTINGS.work_periods.map((p) => (p.id === 'evening' ? { ...p, enabled: true } : p)),
+  })
+
+  it('午休 11:30–14:00 不出现 flexible 任务', () => {
+    const tasks = [
+      flexTask({ id: 'a', duration_minutes: 120 }),
+      flexTask({ id: 'b', duration_minutes: 120 }),
+      flexTask({ id: 'c', duration_minutes: 120 }),
+    ]
+    const { schedule } = reschedule(tasks, [], {}, SETTINGS, NOW)
+    const slots = schedule[TODAY] ?? []
+    expect(slots.length).toBeGreaterThan(0)
+    for (const s of slots) {
+      const a = hhmmToMinutes(s.start)
+      const b = hhmmToMinutes(s.end)
+      expect(b <= LUNCH_START || a >= LUNCH_END).toBe(true)
+    }
+  })
+
+  it('晚间禁用时不排到 17:30 之后', () => {
+    const tasks = [
+      flexTask({ id: 'a', duration_minutes: 200 }),
+      flexTask({ id: 'b', duration_minutes: 200 }),
+      flexTask({ id: 'c', duration_minutes: 200 }),
+    ]
+    const { schedule } = reschedule(tasks, [], {}, SETTINGS, NOW)
+    for (const key of [TODAY, TOMORROW]) {
+      for (const s of schedule[key] ?? []) {
+        expect(hhmmToMinutes(s.end)).toBeLessThanOrEqual(AFTERNOON_END)
+      }
+    }
+  })
+
+  it('晚间启用后可安排晚间任务', () => {
+    const f1 = fixedToday('09:00', '11:30')
+    const f2 = fixedToday('14:00', '17:30')
+    const t = flexTask({ id: 't', duration_minutes: 60 })
+    const { schedule } = reschedule([f1, f2, t], [], {}, eveningEnabled(), NOW)
+    expect(slotTimes(schedule, TODAY)).toContainEqual(['19:00', '20:00'])
+  })
+
+  it('修改工作时段后重排,任务落在新时段内', () => {
+    const later: Settings = {
+      ...SETTINGS,
+      work_periods: [{ id: 'morning', label: '上午', start: '10:00', end: '12:00', enabled: true }],
+    }
+    const task = flexTask({ duration_minutes: 60 })
+    const before = reschedule([task], [], {}, SETTINGS, NOW)
+    const after = reschedule([task], [], {}, later, NOW)
+    expect(slotTimes(before.schedule, TODAY)).toEqual([['09:00', '10:00']])
+    expect(slotTimes(after.schedule, TODAY)).toEqual([['10:00', '11:00']])
+  })
+
+  it('fixed event 横跨午休时,容量只扣减与工作时段重叠的部分', () => {
+    const fixed = fixedToday('10:00', '15:00') // 跨越上午 + 午休 + 下午
+    // 与工作时段重叠:上午 10:00-11:30(90 分钟)+ 下午 14:00-15:00(60 分钟)= 150 分钟
+    // 启用工作总长 360 分钟;容量 = round(0.78 × (360-150)) = 164
+    expect(dayCapacity(NOW, [fixed], SETTINGS, 0)).toBe(164)
   })
 })

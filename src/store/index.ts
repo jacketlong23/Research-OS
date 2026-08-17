@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { DailyLog, Project, Schedule, Settings, Task } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 import { seedDailyLogs, seedProjects, seedTasks } from '../lib/seed'
+import { migrateWorkPeriods } from '../lib/workPeriods'
 import { uid } from '../lib/time'
 
 // ---------- 项目 ----------
@@ -107,12 +108,23 @@ export const useDailyLogsStore = create<DailyLogsState>()(
 /** 已在 DeepSeek 下线的旧模型名(老版本默认值,残留在用户 localStorage 里会导致所有请求 400) */
 const DEAD_MODELS = ['deepseek-chat', 'deepseek-reasoner', 'deepseek-coder']
 
-/** 持久化数据迁移:v2 把旧模型名换成当前默认;自定义模型不动 */
-export function migrateSettings(settings: Partial<Settings>): Partial<Settings> {
-  if (settings.ai_model && DEAD_MODELS.includes(settings.ai_model)) {
-    return { ...settings, ai_model: DEFAULT_SETTINGS.ai_model }
+/** 旧版 localStorage 中的设置(含已被 work_periods 取代的 work_start/work_end) */
+type LegacySettings = Partial<Settings> & { work_start?: string; work_end?: string }
+
+/** 持久化数据迁移:旧模型名换默认、清空已废弃的内置演示 Key、work_start/work_end → work_periods;用户自己的配置不动 */
+export function migrateSettings(settings: LegacySettings): Partial<Settings> {
+  const next: LegacySettings = { ...settings }
+  if (next.ai_model && DEAD_MODELS.includes(next.ai_model)) {
+    next.ai_model = DEFAULT_SETTINGS.ai_model
   }
-  return settings
+  // 旧版本内置的公共演示 Key 已作废,自动清空让用户填自己的(前缀匹配,代码里不保留完整 Key)
+  if (next.ai_api_key && next.ai_api_key.startsWith('sk-fff8be')) {
+    next.ai_api_key = ''
+  }
+  next.work_periods = migrateWorkPeriods(next.work_periods, next.work_start, next.work_end)
+  delete next.work_start
+  delete next.work_end
+  return next
 }
 
 interface SettingsState {
@@ -130,10 +142,10 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'research-os:settings',
-      version: 2,
+      version: 4,
       migrate: (state, version) => {
-        const s = state as { settings?: Partial<Settings> } | null | undefined
-        if (version < 2 && s?.settings) {
+        const s = state as { settings?: LegacySettings } | null | undefined
+        if (version < 4 && s?.settings) {
           s.settings = migrateSettings(s.settings)
         }
         return state

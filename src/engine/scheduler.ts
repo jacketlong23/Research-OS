@@ -1,5 +1,6 @@
 import type { Project, Schedule, ScheduleSlot, Settings, Task } from '../types'
 import { addDays, dateKey, hhmmToMinutes, minutesOfDay, minutesToHHmm, parseDateKey } from '../lib/time'
+import { enabledWorkIntervals, enabledWorkMinutes, overlapWithWork } from '../lib/workPeriods'
 import { scoreTask } from './score'
 
 /** 一天内的分钟区间 */
@@ -54,24 +55,30 @@ function expandRight(list: Interval[], buffer: number): Interval[] {
 }
 
 /**
- * 工作窗口内的空闲区间。
+ * 启用工作时段内的空闲区间。
  * busy 为需要避开的区间;today 会额外裁掉"现在"之前的时间。
+ * 只在启用工作时段内部返回空隙,午休/晚间等未启用时段天然不会出现。
  */
 export function freeGaps(day: Date, busy: Interval[], settings: Settings, now: Date): Interval[] {
-  const ws = hhmmToMinutes(settings.work_start)
-  const we = hhmmToMinutes(settings.work_end)
+  const windows = enabledWorkIntervals(settings)
   const all = [...busy]
   if (dateKey(day) === dateKey(now)) {
-    all.push({ start: -1, end: Math.min(Math.max(minutesOfDay(now), ws), we) })
+    all.push({ start: -1, end: minutesOfDay(now) })
   }
   const merged = mergeIntervals(all.filter((i) => i.end > i.start))
   const gaps: Interval[] = []
-  let cursor = ws
-  for (const b of merged) {
-    if (b.start > cursor) gaps.push({ start: cursor, end: Math.min(b.start, we) })
-    cursor = Math.max(cursor, b.end)
+  for (const w of windows) {
+    let cursor = w.start
+    for (const b of merged) {
+      if (b.end <= w.start) continue
+      if (b.start >= w.end) break
+      const bs = Math.max(b.start, w.start)
+      const be = Math.min(b.end, w.end)
+      if (bs > cursor) gaps.push({ start: cursor, end: bs })
+      cursor = Math.max(cursor, be)
+    }
+    if (cursor < w.end) gaps.push({ start: cursor, end: w.end })
   }
-  if (cursor < we) gaps.push({ start: cursor, end: we })
   return gaps.filter((g) => g.end - g.start > 0)
 }
 
@@ -136,12 +143,15 @@ function newDayPlan(kept: ScheduleSlot[]): DayPlan {
   }
 }
 
-/** 某天还能排的 flexible 总分钟数(fill_ratio 约束) */
-function dayCapacity(day: Date, tasks: Task[], settings: Settings, usedMinutes: number): number {
+/**
+ * 某天还能排的 flexible 总分钟数(fill_ratio 约束)。
+ * 基准 = 所有启用工作时段总长 - 固定事件与工作时段重叠的部分(横跨午休的固定事件只扣工作时段内的部分)。
+ */
+export function dayCapacity(day: Date, tasks: Task[], settings: Settings, usedMinutes: number): number {
   const fixed = fixedEventsOn(tasks, day)
-  const windowLen = hhmmToMinutes(settings.work_end) - hhmmToMinutes(settings.work_start)
-  const fixedMin = sumMinutes(fixed.map((f) => ({ start: f.start, end: f.end })))
-  return Math.round(settings.fill_ratio * Math.max(0, windowLen - fixedMin)) - usedMinutes
+  const totalWorkMin = enabledWorkMinutes(settings)
+  const fixedMin = fixed.reduce((acc, f) => acc + overlapWithWork({ start: f.start, end: f.end }, settings), 0)
+  return Math.round(settings.fill_ratio * Math.max(0, totalWorkMin - fixedMin)) - usedMinutes
 }
 
 interface ChunkPlaced {
@@ -497,7 +507,11 @@ export function insertTaskAtTime(
   if (startMinutes < minutesOfDay(now)) {
     return { ...insertTaskIncrementally(task, schedule, tasks, settings, now), anchored: false }
   }
-  const we = hhmmToMinutes(settings.work_end)
+  // 锚点必须落在某个启用工作时段内;落在午休/晚间等空白处则退回增量插入
+  const win = enabledWorkIntervals(settings).find((w) => startMinutes >= w.start && startMinutes < w.end)
+  if (!win) {
+    return { ...insertTaskIncrementally(task, schedule, tasks, settings, now), anchored: false }
+  }
   const chunks = splitChunks(
     task.duration_minutes,
     task.splittable,
@@ -505,7 +519,7 @@ export function insertTaskAtTime(
     settings.deep_max_minutes,
   )
   const wantFirst = chunks[0]
-  const first = Math.min(wantFirst, we - startMinutes)
+  const first = Math.min(wantFirst, win.end - startMinutes)
   const key = dateKey(now)
   const hard = fixedEventsOn(tasks, now).map((f) => ({ start: f.start, end: f.end }))
   const existing = (schedule[key] ?? []).map((s) => ({ start: hhmmToMinutes(s.start), end: hhmmToMinutes(s.end) }))

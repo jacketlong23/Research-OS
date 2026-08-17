@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
-import type { DailyLog, Project, Schedule, Settings, Task } from '../types'
+import type { DailyLog, Project, Schedule, Settings, Task, WorkPeriod } from '../types'
 import {
+  migrateSettings,
   useDailyLogsStore,
   useProjectsStore,
   useScheduleStore,
@@ -9,11 +10,15 @@ import {
   resetToSeed,
 } from '../store'
 import { testAIConnection, type AITestResult } from '../ai/client'
+import { hhmmToMinutes, uid } from '../lib/time'
 import { APP_VERSION } from '../version'
 
 const inputCls =
   'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
 const labelCls = 'mb-1 block text-xs text-slate-500'
+
+/** 预置的三段工作时段(不可删除,只能启用/关闭/改时间) */
+const BUILTIN_PERIOD_IDS = ['morning', 'afternoon', 'evening']
 
 interface Backup {
   version: 1
@@ -22,7 +27,40 @@ interface Backup {
   tasks: Task[]
   schedule: Schedule
   daily_logs: DailyLog[]
-  settings: Settings
+  /** 导出永远不含 API Key */
+  settings: Omit<Settings, 'ai_api_key'>
+}
+
+/** 校验工作时段:至少一个启用、end>start、启用时段互不重叠。返回错误描述或 null */
+function validatePeriods(periods: WorkPeriod[]): string | null {
+  if (periods.filter((p) => p.enabled).length === 0) return '至少保留一个启用的工作时段'
+  for (const p of periods) {
+    if (hhmmToMinutes(p.end) <= hhmmToMinutes(p.start)) {
+      return `「${p.label || '未命名时段'}」的结束时间必须晚于开始时间`
+    }
+  }
+  const enabled = periods
+    .filter((p) => p.enabled)
+    .sort((a, b) => hhmmToMinutes(a.start) - hhmmToMinutes(b.start))
+  for (let i = 1; i < enabled.length; i++) {
+    if (hhmmToMinutes(enabled[i].start) < hhmmToMinutes(enabled[i - 1].end)) {
+      return `「${enabled[i - 1].label || '时段'}」与「${enabled[i].label || '时段'}」重叠,请调整`
+    }
+  }
+  return null
+}
+
+/** 导出用:手动列出全部设置字段,唯独不包含 ai_api_key */
+function settingsForExport(s: Settings): Omit<Settings, 'ai_api_key'> {
+  return {
+    work_periods: s.work_periods,
+    fill_ratio: s.fill_ratio,
+    break_minutes: s.break_minutes,
+    deep_min_minutes: s.deep_min_minutes,
+    deep_max_minutes: s.deep_max_minutes,
+    ai_base_url: s.ai_base_url,
+    ai_model: s.ai_model,
+  }
 }
 
 function exportData() {
@@ -33,7 +71,7 @@ function exportData() {
     tasks: useTasksStore.getState().tasks,
     schedule: useScheduleStore.getState().schedule,
     daily_logs: useDailyLogsStore.getState().logs,
-    settings: useSettingsStore.getState().settings,
+    settings: settingsForExport(useSettingsStore.getState().settings),
   }
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -51,6 +89,7 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState('')
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<AITestResult | null>(null)
+  const [periodError, setPeriodError] = useState('')
 
   const runTest = async () => {
     setTesting(true)
@@ -58,6 +97,28 @@ export default function SettingsPage() {
     const r = await testAIConnection(settings)
     setTestResult(r)
     setTesting(false)
+  }
+
+  // ---------- 工作时段编辑 ----------
+  const commitPeriods = (next: WorkPeriod[]) => {
+    const err = validatePeriods(next)
+    setPeriodError(err ?? '')
+    if (!err) update({ work_periods: next })
+  }
+
+  const patchPeriod = (id: string, patch: Partial<WorkPeriod>) => {
+    commitPeriods(settings.work_periods.map((p) => (p.id === id ? { ...p, ...patch } : p)))
+  }
+
+  const addPeriod = () => {
+    commitPeriods([
+      ...settings.work_periods,
+      { id: uid('period'), label: '', start: '18:00', end: '19:00', enabled: false },
+    ])
+  }
+
+  const removePeriod = (id: string) => {
+    commitPeriods(settings.work_periods.filter((p) => p.id !== id))
   }
 
   const importData = async (file: File) => {
@@ -68,7 +129,12 @@ export default function SettingsPage() {
       useTasksStore.getState().setTasks(data.tasks)
       useScheduleStore.getState().setSchedule(data.schedule ?? {})
       useDailyLogsStore.getState().setLogs(data.daily_logs ?? [])
-      if (data.settings) useSettingsStore.getState().update(data.settings)
+      if (data.settings) {
+        // 先迁移旧版结构(work_start/work_end、旧模型名),再用当前 Key 覆盖,导入永不改动本机 Key
+        const migrated = migrateSettings(data.settings)
+        const currentKey = useSettingsStore.getState().settings.ai_api_key
+        useSettingsStore.getState().update({ ...migrated, ai_api_key: currentKey })
+      }
       setMsg('✅ 导入成功')
     } catch (e) {
       setMsg(`❌ 导入失败:${e instanceof Error ? e.message : '文件格式错误'}`)
@@ -77,21 +143,75 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      {/* 工作时间 */}
+      {/* 工作时段 */}
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-300">⏰ 工作时间与排程</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>开始时间</label>
-            <input type="time" className={inputCls} value={settings.work_start} onChange={(e) => update({ work_start: e.target.value })} />
-          </div>
-          <div>
-            <label className={labelCls}>结束时间</label>
-            <input type="time" className={inputCls} value={settings.work_end} onChange={(e) => update({ work_end: e.target.value })} />
-          </div>
+        <h3 className="mb-1 text-sm font-semibold text-slate-300">⏰ 工作时段</h3>
+        <p className="mb-3 text-[11px] text-slate-500">
+          自动排程只会在「启用」的时段内安排任务;午休、晚间等未启用时段不会排入任务。
+        </p>
+        <div className="space-y-2">
+          {settings.work_periods.map((p) => {
+            const isBuiltin = BUILTIN_PERIOD_IDS.includes(p.id)
+            return (
+              <div key={p.id} className="flex items-center gap-2">
+                <button
+                  onClick={() => patchPeriod(p.id, { enabled: !p.enabled })}
+                  className={`w-12 shrink-0 rounded-lg border px-1 py-1.5 text-xs transition ${
+                    p.enabled
+                      ? 'border-cyan-700 bg-cyan-950/50 text-cyan-300'
+                      : 'border-slate-700 text-slate-500 hover:text-slate-300'
+                  }`}
+                  title={p.enabled ? '点击关闭' : '点击启用'}
+                >
+                  {p.enabled ? '启用' : '关闭'}
+                </button>
+                {isBuiltin ? (
+                  <span className="w-12 shrink-0 text-sm text-slate-300">{p.label}</span>
+                ) : (
+                  <input
+                    className="w-14 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-1.5 py-1.5 text-xs text-slate-200 outline-none transition focus:border-cyan-600"
+                    value={p.label ?? ''}
+                    placeholder="名称"
+                    onChange={(e) => patchPeriod(p.id, { label: e.target.value })}
+                  />
+                )}
+                <input
+                  type="time"
+                  className="w-28 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 outline-none transition focus:border-cyan-600"
+                  value={p.start}
+                  onChange={(e) => patchPeriod(p.id, { start: e.target.value })}
+                />
+                <span className="shrink-0 text-slate-600">—</span>
+                <input
+                  type="time"
+                  className="w-28 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 outline-none transition focus:border-cyan-600"
+                  value={p.end}
+                  onChange={(e) => patchPeriod(p.id, { end: e.target.value })}
+                />
+                {!isBuiltin && (
+                  <button
+                    onClick={() => removePeriod(p.id)}
+                    className="shrink-0 rounded-lg border border-rose-900/60 px-2 py-1.5 text-xs text-rose-400/90 transition hover:bg-rose-950/40"
+                    title="删除该时段"
+                  >
+                    删除
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <button
+          onClick={addPeriod}
+          className="mt-2 rounded-lg border border-dashed border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition hover:border-cyan-700 hover:text-cyan-400"
+        >
+          + 添加工作时段
+        </button>
+        {periodError && <p className="mt-2 text-xs text-rose-400">{periodError}</p>}
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="col-span-2">
             <label className={labelCls}>
-              每日自动排程上限:{Math.round(settings.fill_ratio * 100)}%(给临时任务和 Debug 留余量)
+              每日自动排程上限:{Math.round(settings.fill_ratio * 100)}%(占启用工作时段总长,给临时任务和 Debug 留余量)
             </label>
             <input
               type="range"
@@ -156,8 +276,8 @@ export default function SettingsPage() {
           </button>
         </div>
         <p className="mb-3 text-[11px] text-slate-500">
-          只用于:自然语言建任务、优先级解释、半月报草稿。内置的是公共演示 Key,额度耗尽时 AI
-          自动降级为本地规则(点「测试连接」可看到具体原因);长期使用请填入自己的 Key。
+          AI 功能为可选增强。API Key 仅保存在当前浏览器 localStorage 中,不会上传到 Research OS
+          或 GitHub。未配置 API Key 时,系统自动使用本地规则。
         </p>
         {testResult && (
           <p className={`mb-3 rounded-lg px-3 py-2 text-xs ${testResult.ok ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>

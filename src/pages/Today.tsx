@@ -11,6 +11,7 @@ import {
 } from '../engine/scheduler'
 import { colorClasses } from '../lib/colors'
 import { addDays, dateKey, fmtCnDate, fmtDeadlineRelative, fmtDuration, hhmmToMinutes, minutesOfDay, minutesToHHmm } from '../lib/time'
+import { formatWorkPeriods, workDayBounds } from '../lib/workPeriods'
 import { useNow } from '../lib/useNow'
 import { explainRecommendation } from '../ai/client'
 import TaskForm from '../components/TaskForm'
@@ -48,8 +49,7 @@ export default function Today() {
   }, [todayKey])
 
   const items = dayTimeline(tasks, schedule, now)
-  const ws = hhmmToMinutes(settings.work_start)
-  const we = hhmmToMinutes(settings.work_end)
+  const { start: ws, end: we } = workDayBounds(settings)
   const mins = minutesOfDay(now)
   const todayNow = new Date(now)
 
@@ -213,7 +213,7 @@ export default function Today() {
         <h3 className="mb-3 text-sm font-semibold text-slate-300">
           今日时间轴{' '}
           <span className="ml-1 text-xs font-normal text-slate-500">
-            {settings.work_start}–{settings.work_end} · 点击时间块编辑 · 点击空白处在该时刻新建任务
+            {formatWorkPeriods(settings)} · 点击时间块编辑 · 点击空白处在该时刻新建任务
           </span>
         </h3>
         <div
