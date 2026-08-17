@@ -41,7 +41,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
 
   const [title, setTitle] = useState(initial?.title ?? '')
   const [projectId, setProjectId] = useState<string>('')
-  const [duration, setDuration] = useState(initial?.duration_minutes ?? 60)
+  const [duration, setDuration] = useState<number | ''>(initial?.duration_minutes ?? 60)
   const [deadline, setDeadline] = useState(isoToLocalInput(initial?.deadline ?? null))
   const [importance, setImportance] = useState(initial?.importance ?? 3)
   const [splittable, setSplittable] = useState(initial?.splittable ?? true)
@@ -89,15 +89,17 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
       }
     }
     setSubmitErr('')
+    // 空输入/0 回退默认 60 分钟;其余至少 15 分钟
+    const durationVal = Number(duration) || 60
     const base = {
       title: title.trim(),
       project_id: projectId || null,
-      duration_minutes: Math.max(15, duration),
+      duration_minutes: Math.max(15, durationVal),
       deadline: localInputToISO(deadline),
       importance,
       status: 'todo' as const,
       splittable: type === 'fixed' ? false : splittable,
-      minimum_block_minutes: splittable ? 30 : Math.max(30, Math.min(duration, 150)),
+      minimum_block_minutes: splittable ? 30 : Math.max(30, Math.min(durationVal, 150)),
       blocking,
       type,
     }
@@ -174,10 +176,10 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
           <input
             type="number"
             min={15}
-            step={15}
+            step={5}
             className={inputCls}
             value={duration}
-            onChange={(e) => setDuration(Number(e.target.value) || 60)}
+            onChange={(e) => setDuration(e.target.value === '' ? '' : Number(e.target.value))}
           />
         </div>
         <div>
