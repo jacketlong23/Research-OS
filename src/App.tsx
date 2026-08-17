@@ -18,15 +18,15 @@ export default function App() {
   const now = useNow(60000)
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col">
-      <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/90 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/90 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold tracking-wide text-cyan-400">Research OS</h1>
+            <h1 className="text-lg font-bold tracking-wide text-cyan-600 dark:text-cyan-400">Research OS</h1>
             <p className="text-xs text-slate-500">科研驾驶舱 · {fmtCnDate(now)}</p>
           </div>
           <NavLink
             to="/settings"
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 transition hover:border-cyan-600 hover:text-cyan-400"
+            className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 transition hover:border-cyan-600 hover:text-cyan-600 hover:dark:text-cyan-400"
             title="设置"
           >
             ⚙ 设置
@@ -44,7 +44,7 @@ export default function App() {
         </Routes>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-800 bg-slate-950/95 backdrop-blur">
+      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur">
         <div className="mx-auto grid max-w-5xl grid-cols-4">
           {NAV.map((n) => (
             <NavLink
@@ -53,7 +53,7 @@ export default function App() {
               end={n.end}
               className={({ isActive }) =>
                 `flex flex-col items-center gap-0.5 py-2.5 text-xs transition ${
-                  isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+                  isActive ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500 hover:text-slate-700 hover:dark:text-slate-300'
                 }`
               }
             >

@@ -15,7 +15,7 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
+  'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600'
 
 export default function TaskBlockEditor({ dateKey, taskId, slotStart, onClose }: Props) {
   const tasks = useTasksStore((s) => s.tasks)
@@ -95,15 +95,15 @@ export default function TaskBlockEditor({ dateKey, taskId, slotStart, onClose }:
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 animate-fade-in sm:items-center" onClick={onClose}>
       <div
-        className="w-full max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl animate-sheet-in"
+        className="w-full max-w-md space-y-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 p-4 shadow-2xl animate-sheet-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-200">
             <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} />
             编辑任务 · {dateKey}
           </h3>
-          <button onClick={onClose} className="rounded-lg px-2 py-1 text-slate-500 transition hover:text-slate-200" title="关闭">
+          <button onClick={onClose} className="rounded-lg px-2 py-1 text-slate-500 transition hover:text-slate-800 hover:dark:text-slate-200" title="关闭">
             ✕
           </button>
         </div>
@@ -120,7 +120,7 @@ export default function TaskBlockEditor({ dateKey, taskId, slotStart, onClose }:
           />
         </div>
 
-        <div className="rounded-lg bg-slate-800/50 px-3 py-2 text-[11px] leading-5 text-slate-400">
+        <div className="rounded-lg bg-slate-200/50 dark:bg-slate-800/50 px-3 py-2 text-[11px] leading-5 text-slate-600 dark:text-slate-400">
           <p>
             {proj?.name ?? (task.type === 'fixed' ? '固定事件' : '收件箱')} · 任务总时长 {fmtDuration(task.duration_minutes)} · 截止{' '}
             {fmtDeadlineRelative(task.deadline, now)}
@@ -149,13 +149,13 @@ export default function TaskBlockEditor({ dateKey, taskId, slotStart, onClose }:
             保存
           </button>
         </div>
-        {err && <p className="text-xs text-rose-400">{err}</p>}
+        {err && <p className="text-xs text-rose-600 dark:text-rose-400">{err}</p>}
 
-        <div className="grid grid-cols-3 gap-2 border-t border-slate-800 pt-3">
+        <div className="grid grid-cols-3 gap-2 border-t border-slate-200 dark:border-slate-800 pt-3">
           {task.status !== 'done' && (
             <button
               onClick={complete}
-              className="rounded-lg border border-emerald-800 py-2 text-xs text-emerald-400 transition hover:bg-emerald-950/40"
+              className="rounded-lg border border-emerald-300 dark:border-emerald-800 py-2 text-xs text-emerald-600 dark:text-emerald-400 transition hover:bg-emerald-100/40 hover:dark:bg-emerald-950/40"
             >
               ✓ 标记完成
             </button>
@@ -163,14 +163,14 @@ export default function TaskBlockEditor({ dateKey, taskId, slotStart, onClose }:
           {task.type === 'flexible' && slot && (
             <button
               onClick={removeBlock}
-              className="rounded-lg border border-slate-700 py-2 text-xs text-slate-400 transition hover:text-slate-200"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 py-2 text-xs text-slate-600 dark:text-slate-400 transition hover:text-slate-800 hover:dark:text-slate-200"
             >
               移除此时间块
             </button>
           )}
           <button
             onClick={removeTask}
-            className="rounded-lg border border-rose-900 py-2 text-xs text-rose-400 transition hover:bg-rose-950/40"
+            className="rounded-lg border border-rose-200 dark:border-rose-900 py-2 text-xs text-rose-600 dark:text-rose-400 transition hover:bg-rose-100/40 hover:dark:bg-rose-950/40"
           >
             删除任务
           </button>

@@ -8,7 +8,7 @@ import { useNow } from '../lib/useNow'
 import TaskForm from '../components/TaskForm'
 
 const inputCls =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
+  'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600'
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: '待办',
@@ -38,7 +38,7 @@ function TaskRow({ task }: { task: Task }) {
   }
 
   return (
-    <div className={`rounded-xl border bg-slate-900/60 ${task.status === 'done' ? 'border-slate-800/50 opacity-60' : 'border-slate-800'}`}>
+    <div className={`rounded-xl border bg-slate-100/60 dark:bg-slate-900/60 ${task.status === 'done' ? 'border-slate-200/50 dark:border-slate-800/50 opacity-60' : 'border-slate-200 dark:border-slate-800'}`}>
       <div className="flex items-center gap-2 px-3 py-2.5">
         <button
           onClick={() =>
@@ -49,7 +49,7 @@ function TaskRow({ task }: { task: Task }) {
             )
           }
           className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] transition ${
-            task.status === 'done' ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400' : 'border-slate-600 text-transparent hover:border-cyan-500'
+            task.status === 'done' ? 'border-emerald-500 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'border-slate-400 dark:border-slate-600 text-transparent hover:border-cyan-500'
           }`}
           title={task.status === 'done' ? '标记为未完成' : '标记完成'}
         >
@@ -57,20 +57,20 @@ function TaskRow({ task }: { task: Task }) {
         </button>
         <span className={`h-2 w-2 shrink-0 rounded-full ${c.dot}`} />
         <button onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 text-left">
-          <p className={`truncate text-sm ${task.status === 'done' ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+          <p className={`truncate text-sm ${task.status === 'done' ? 'text-slate-500 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
             {task.type === 'fixed' && '📌 '}
             {task.title}
           </p>
           <p className="truncate text-[11px] text-slate-500">
             {proj?.name ?? '收件箱'} · {fmtDuration(task.duration_minutes)} · 截止 {fmtDeadlineRelative(task.deadline, now)} · {'★'.repeat(task.importance)}
-            {task.blocking && <span className="ml-1 text-rose-400">阻塞</span>}
+            {task.blocking && <span className="ml-1 text-rose-600 dark:text-rose-400">阻塞</span>}
           </p>
         </button>
-        <span className="shrink-0 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">{STATUS_LABEL[task.status]}</span>
+        <span className="shrink-0 rounded bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-600 dark:text-slate-400">{STATUS_LABEL[task.status]}</span>
       </div>
 
       {open && (
-        <div className="space-y-3 border-t border-slate-800 p-3">
+        <div className="space-y-3 border-t border-slate-200 dark:border-slate-800 p-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="mb-1 block text-xs text-slate-500">任务名称</label>
@@ -140,7 +140,7 @@ function TaskRow({ task }: { task: Task }) {
             <div className="flex items-end gap-4 pb-1">
               {task.type === 'flexible' && (
                 <>
-                  <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-400">
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <input
                       type="checkbox"
                       checked={task.splittable}
@@ -149,7 +149,7 @@ function TaskRow({ task }: { task: Task }) {
                     />
                     允许拆分
                   </label>
-                  <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-400">
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                     <input
                       type="checkbox"
                       checked={task.blocking}
@@ -163,8 +163,8 @@ function TaskRow({ task }: { task: Task }) {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-slate-600">修改耗时/截止后,回今日页点「智能重新安排」生效</p>
-            <button onClick={handleDelete} className="rounded-lg border border-rose-900 px-3 py-1.5 text-xs text-rose-400 transition hover:bg-rose-950/50">
+            <p className="text-[11px] text-slate-400 dark:text-slate-600">修改耗时/截止后,回今日页点「智能重新安排」生效</p>
+            <button onClick={handleDelete} className="rounded-lg border border-rose-200 dark:border-rose-900 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 transition hover:bg-rose-100/50 hover:dark:bg-rose-950/50">
               删除任务
             </button>
           </div>
@@ -188,36 +188,36 @@ function ProjectCard({ project }: { project: Project }) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
       <button onClick={() => setOpen((v) => !v)} className="flex w-full items-start justify-between gap-2 text-left">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} />
-            <h3 className="truncate text-sm font-semibold text-slate-200">{project.name}</h3>
+            <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">{project.name}</h3>
             <span className="shrink-0 text-xs text-slate-500">{active} 个进行中</span>
           </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
             <div className={`h-full rounded-full ${c.bar}`} style={{ width: `${project.progress}%` }} />
           </div>
           <div className="mt-1.5 flex items-center justify-between text-[11px]">
             <span className={c.text}>{project.progress}%</span>
-            <span className="text-slate-600">优先级 P{project.priority}</span>
+            <span className="text-slate-400 dark:text-slate-600">优先级 P{project.priority}</span>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
             <div>
               <p className="text-slate-500">当前</p>
-              <p className="truncate text-slate-300" title={project.current_focus}>{project.current_focus || '—'}</p>
+              <p className="truncate text-slate-700 dark:text-slate-300" title={project.current_focus}>{project.current_focus || '—'}</p>
             </div>
             <div>
               <p className="text-slate-500">下一步</p>
-              <p className="truncate text-slate-300" title={project.next_step}>{project.next_step || '—'}</p>
+              <p className="truncate text-slate-700 dark:text-slate-300" title={project.next_step}>{project.next_step || '—'}</p>
             </div>
           </div>
         </div>
       </button>
 
       {open && (
-        <div className="mt-3 space-y-3 border-t border-slate-800 pt-3">
+        <div className="mt-3 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="mb-1 block text-xs text-slate-500">项目名称</label>
@@ -265,7 +265,7 @@ function ProjectCard({ project }: { project: Project }) {
                   <button
                     key={name}
                     onClick={() => updateProject(project.id, { color: name })}
-                    className={`h-6 w-6 rounded-full ${colorClasses(name).dot} ${project.color === name ? 'ring-2 ring-slate-300' : 'opacity-60'}`}
+                    className={`h-6 w-6 rounded-full ${colorClasses(name).dot} ${project.color === name ? 'ring-2 ring-slate-700 dark:ring-slate-300' : 'opacity-60'}`}
                     title={name}
                   />
                 ))}
@@ -273,7 +273,7 @@ function ProjectCard({ project }: { project: Project }) {
             </div>
           </div>
           <div className="flex justify-end">
-            <button onClick={handleDelete} className="rounded-lg border border-rose-900 px-3 py-1.5 text-xs text-rose-400 transition hover:bg-rose-950/50">
+            <button onClick={handleDelete} className="rounded-lg border border-rose-200 dark:border-rose-900 px-3 py-1.5 text-xs text-rose-600 dark:text-rose-400 transition hover:bg-rose-100/50 hover:dark:bg-rose-950/50">
               删除项目
             </button>
           </div>
@@ -298,13 +298,13 @@ export default function Tasks() {
       <div className="flex gap-2">
         <button
           onClick={() => setTab('tasks')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${tab === 'tasks' ? 'bg-cyan-950/60 text-cyan-300 ring-1 ring-cyan-800' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${tab === 'tasks' ? 'bg-cyan-100/60 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 ring-1 ring-cyan-300 dark:ring-cyan-800' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:dark:text-slate-200'}`}
         >
           任务({todo.length + doing.length})
         </button>
         <button
           onClick={() => setTab('projects')}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${tab === 'projects' ? 'bg-cyan-950/60 text-cyan-300 ring-1 ring-cyan-800' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${tab === 'projects' ? 'bg-cyan-100/60 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 ring-1 ring-cyan-300 dark:ring-cyan-800' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:dark:text-slate-200'}`}
         >
           项目({projects.length})
         </button>
@@ -314,7 +314,7 @@ export default function Tasks() {
         <>
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="w-full rounded-xl border border-dashed border-slate-700 py-2.5 text-sm text-slate-400 transition hover:border-cyan-700 hover:text-cyan-400"
+            className="w-full rounded-xl border border-dashed border-slate-300 dark:border-slate-700 py-2.5 text-sm text-slate-600 dark:text-slate-400 transition hover:border-cyan-400 hover:dark:border-cyan-700 hover:text-cyan-600 hover:dark:text-cyan-400"
           >
             {showForm ? '收起新增任务' : '+ 新任务'}
           </button>
@@ -331,7 +331,7 @@ export default function Tasks() {
 
           <section className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">待办 · {todo.length}</h3>
-            {todo.length === 0 && <p className="text-sm text-slate-600">暂无待办任务</p>}
+            {todo.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-600">暂无待办任务</p>}
             {todo.map((t) => (
               <TaskRow key={t.id} task={t} />
             ))}
@@ -339,7 +339,7 @@ export default function Tasks() {
 
           {done.length > 0 && (
             <section className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">已完成 · {done.length}</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-600">已完成 · {done.length}</h3>
               {done.map((t) => (
                 <TaskRow key={t.id} task={t} />
               ))}
@@ -381,13 +381,13 @@ function NewProject() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full rounded-xl border border-dashed border-slate-700 py-2.5 text-sm text-slate-400 transition hover:border-cyan-700 hover:text-cyan-400"
+        className="w-full rounded-xl border border-dashed border-slate-300 dark:border-slate-700 py-2.5 text-sm text-slate-600 dark:text-slate-400 transition hover:border-cyan-400 hover:dark:border-cyan-700 hover:text-cyan-600 hover:dark:text-cyan-400"
       >
         + 新项目
       </button>
     )
   return (
-    <div className="flex gap-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+    <div className="flex gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3">
       <input
         className={inputCls}
         placeholder="项目名称,如:论文写作"

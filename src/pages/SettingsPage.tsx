@@ -15,7 +15,7 @@ import { applyTheme, getTheme, type Theme } from '../lib/theme'
 import { APP_VERSION } from '../version'
 
 const inputCls =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
+  'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600'
 const labelCls = 'mb-1 block text-xs text-slate-500'
 
 /** 预置的三段工作时段(不可删除,只能启用/关闭/改时间) */
@@ -151,16 +151,16 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       {/* 外观 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">🎨 外观</h3>
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
+        <h3 className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">🎨 外观</h3>
         <p className="mb-3 text-[11px] text-slate-500">选择页面配色主题,立即生效并自动保存。</p>
         <div className="flex gap-2">
           <button
             onClick={() => changeTheme('light')}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
               theme === 'light'
-                ? 'border-cyan-600 bg-cyan-950/50 text-cyan-300'
-                : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                ? 'border-cyan-600 bg-cyan-100/50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300'
+                : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-500 hover:text-slate-800 hover:dark:text-slate-200'
             }`}
           >
             ☀️ 亮色
@@ -169,8 +169,8 @@ export default function SettingsPage() {
             onClick={() => changeTheme('dark')}
             className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
               theme === 'dark'
-                ? 'border-cyan-600 bg-cyan-950/50 text-cyan-300'
-                : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                ? 'border-cyan-600 bg-cyan-100/50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300'
+                : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-500 hover:text-slate-800 hover:dark:text-slate-200'
             }`}
           >
             🌙 暗色
@@ -179,8 +179,8 @@ export default function SettingsPage() {
       </section>
 
       {/* 工作时段 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">⏰ 工作时段</h3>
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
+        <h3 className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">⏰ 工作时段</h3>
         <p className="mb-3 text-[11px] text-slate-500">
           自动排程只会在「启用」的时段内安排任务;午休、晚间等未启用时段不会排入任务。
         </p>
@@ -193,18 +193,18 @@ export default function SettingsPage() {
                   onClick={() => patchPeriod(p.id, { enabled: !p.enabled })}
                   className={`w-12 shrink-0 rounded-lg border px-1 py-1.5 text-xs transition ${
                     p.enabled
-                      ? 'border-cyan-700 bg-cyan-950/50 text-cyan-300'
-                      : 'border-slate-700 text-slate-500 hover:text-slate-300'
+                      ? 'border-cyan-400 dark:border-cyan-700 bg-cyan-100/50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300'
+                      : 'border-slate-300 dark:border-slate-700 text-slate-500 hover:text-slate-700 hover:dark:text-slate-300'
                   }`}
                   title={p.enabled ? '点击关闭' : '点击启用'}
                 >
                   {p.enabled ? '启用' : '关闭'}
                 </button>
                 {isBuiltin ? (
-                  <span className="w-12 shrink-0 text-sm text-slate-300">{p.label}</span>
+                  <span className="w-12 shrink-0 text-sm text-slate-700 dark:text-slate-300">{p.label}</span>
                 ) : (
                   <input
-                    className="w-14 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-1.5 py-1.5 text-xs text-slate-200 outline-none transition focus:border-cyan-600"
+                    className="w-14 shrink-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-1.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600"
                     value={p.label ?? ''}
                     placeholder="名称"
                     onChange={(e) => patchPeriod(p.id, { label: e.target.value })}
@@ -212,21 +212,21 @@ export default function SettingsPage() {
                 )}
                 <input
                   type="time"
-                  className="w-28 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 outline-none transition focus:border-cyan-600"
+                  className="w-28 shrink-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600"
                   value={p.start}
                   onChange={(e) => patchPeriod(p.id, { start: e.target.value })}
                 />
-                <span className="shrink-0 text-slate-600">—</span>
+                <span className="shrink-0 text-slate-400 dark:text-slate-600">—</span>
                 <input
                   type="time"
-                  className="w-28 shrink-0 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 outline-none transition focus:border-cyan-600"
+                  className="w-28 shrink-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600"
                   value={p.end}
                   onChange={(e) => patchPeriod(p.id, { end: e.target.value })}
                 />
                 {!isBuiltin && (
                   <button
                     onClick={() => removePeriod(p.id)}
-                    className="shrink-0 rounded-lg border border-rose-900/60 px-2 py-1.5 text-xs text-rose-400/90 transition hover:bg-rose-950/40"
+                    className="shrink-0 rounded-lg border border-rose-200/60 dark:border-rose-900/60 px-2 py-1.5 text-xs text-rose-600/90 dark:text-rose-400/90 transition hover:bg-rose-100/40 hover:dark:bg-rose-950/40"
                     title="删除该时段"
                   >
                     删除
@@ -238,11 +238,11 @@ export default function SettingsPage() {
         </div>
         <button
           onClick={addPeriod}
-          className="mt-2 rounded-lg border border-dashed border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition hover:border-cyan-700 hover:text-cyan-400"
+          className="mt-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 transition hover:border-cyan-400 hover:dark:border-cyan-700 hover:text-cyan-600 hover:dark:text-cyan-400"
         >
           + 添加工作时段
         </button>
-        {periodError && <p className="mt-2 text-xs text-rose-400">{periodError}</p>}
+        {periodError && <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{periodError}</p>}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="col-span-2">
             <label className={labelCls}>
@@ -299,13 +299,13 @@ export default function SettingsPage() {
       </section>
 
       {/* AI 配置 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
         <div className="mb-1 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-300">🤖 AI 配置(OpenAI 兼容接口)</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">🤖 AI 配置(OpenAI 兼容接口)</h3>
           <button
             onClick={runTest}
             disabled={testing}
-            className="rounded-lg border border-cyan-700 bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-300 transition hover:bg-cyan-900/50 disabled:opacity-50"
+            className="rounded-lg border border-cyan-400 dark:border-cyan-700 bg-cyan-100/50 dark:bg-cyan-950/50 px-3 py-1.5 text-xs text-cyan-700 dark:text-cyan-300 transition hover:bg-cyan-200/50 hover:dark:bg-cyan-900/50 disabled:opacity-50"
           >
             {testing ? '测试中…' : '🔌 测试连接'}
           </button>
@@ -315,7 +315,7 @@ export default function SettingsPage() {
           或 GitHub。未配置 API Key 时,系统自动使用本地规则。
         </p>
         {testResult && (
-          <p className={`mb-3 rounded-lg px-3 py-2 text-xs ${testResult.ok ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>
+          <p className={`mb-3 rounded-lg px-3 py-2 text-xs ${testResult.ok ? 'bg-emerald-100/40 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300' : 'bg-rose-100/40 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300'}`}>
             {testResult.ok ? '✅ ' : '❌ '}
             {testResult.message}
           </p>
@@ -343,19 +343,19 @@ export default function SettingsPage() {
       </section>
 
       {/* 数据 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">💾 数据</h3>
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
+        <h3 className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">💾 数据</h3>
         <p className="mb-3 text-[11px] text-slate-500">所有数据保存在浏览器 localStorage,建议定期导出备份。</p>
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={exportData}
-            className="rounded-lg border border-slate-700 py-2 text-sm text-slate-300 transition hover:border-cyan-600 hover:text-cyan-400"
+            className="rounded-lg border border-slate-300 dark:border-slate-700 py-2 text-sm text-slate-700 dark:text-slate-300 transition hover:border-cyan-600 hover:text-cyan-600 hover:dark:text-cyan-400"
           >
             导出 JSON
           </button>
           <button
             onClick={() => fileRef.current?.click()}
-            className="rounded-lg border border-slate-700 py-2 text-sm text-slate-300 transition hover:border-cyan-600 hover:text-cyan-400"
+            className="rounded-lg border border-slate-300 dark:border-slate-700 py-2 text-sm text-slate-700 dark:text-slate-300 transition hover:border-cyan-600 hover:text-cyan-600 hover:dark:text-cyan-400"
           >
             导入 JSON
           </button>
@@ -366,7 +366,7 @@ export default function SettingsPage() {
                 setMsg('✅ 已重置为示例数据')
               }
             }}
-            className="rounded-lg border border-amber-900/60 py-2 text-sm text-amber-400/90 transition hover:bg-amber-950/40"
+            className="rounded-lg border border-amber-200/60 dark:border-amber-900/60 py-2 text-sm text-amber-600/90 dark:text-amber-400/90 transition hover:bg-amber-100/40 hover:dark:bg-amber-950/40"
           >
             重置示例数据
           </button>
@@ -382,10 +382,10 @@ export default function SettingsPage() {
             e.target.value = ''
           }}
         />
-        {msg && <p className="mt-2 text-xs text-slate-400">{msg}</p>}
+        {msg && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{msg}</p>}
       </section>
 
-      <p className="pb-2 text-center text-[11px] text-slate-600">
+      <p className="pb-2 text-center text-[11px] text-slate-400 dark:text-slate-600">
         Research OS · 科研驾驶舱 v{APP_VERSION} · 今天优先,整周辅助
       </p>
     </div>

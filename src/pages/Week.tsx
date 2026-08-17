@@ -56,16 +56,16 @@ export default function Week() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setWeekOffset((v) => v - 1)}
-          className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200"
+          className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:dark:text-slate-200"
         >
           ← 上一周
         </button>
-        <h2 className="text-sm font-semibold text-slate-300">
-          {fmtCnDate(weekStart)} – {fmtCnDate(addDays(weekStart, 6))} {weekOffset === 0 && <span className="text-cyan-400">(本周)</span>}
+        <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {fmtCnDate(weekStart)} – {fmtCnDate(addDays(weekStart, 6))} {weekOffset === 0 && <span className="text-cyan-600 dark:text-cyan-400">(本周)</span>}
         </h2>
         <button
           onClick={() => setWeekOffset((v) => v + 1)}
-          className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:text-slate-200"
+          className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 hover:dark:text-slate-200"
         >
           下一周 →
         </button>
@@ -74,14 +74,14 @@ export default function Week() {
         点击时间块可编辑时间/名称;拖拽可移动到其他日期;虚线框为固定事件;旗标 ⚑ 为该日截止的任务。
       </p>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3">
         <div className="flex min-w-[760px]">
           {/* 时间列 */}
           <div className="relative w-11 shrink-0" style={{ height: (we - ws) * PX_PER_MIN }}>
             {hours.map((m) => (
               <span
                 key={m}
-                className="absolute right-1 -translate-y-1/2 text-[10px] text-slate-600"
+                className="absolute right-1 -translate-y-1/2 text-[10px] text-slate-400 dark:text-slate-600"
                 style={{ top: (m - ws) * PX_PER_MIN }}
               >
                 {minutesToHHmm(m)}
@@ -98,7 +98,7 @@ export default function Week() {
             return (
               <div
                 key={key}
-                className={`min-w-0 flex-1 rounded-lg ${isToday ? 'bg-cyan-950/20 ring-1 ring-cyan-900/60' : ''} ${
+                className={`min-w-0 flex-1 rounded-lg ${isToday ? 'bg-cyan-100/20 dark:bg-cyan-950/20 ring-1 ring-cyan-200/60 dark:ring-cyan-900/60' : ''} ${
                   dragOver === key ? 'outline outline-1 outline-cyan-500/60' : ''
                 }`}
                 onDragOver={(e) => {
@@ -114,19 +114,19 @@ export default function Week() {
                 }}
               >
                 {/* 表头:星期 + 日期 + deadline 旗标 */}
-                <div className="border-b border-slate-800 px-1 pb-1 pt-0.5 text-center">
-                  <p className={`text-xs font-semibold ${isToday ? 'text-cyan-400' : 'text-slate-400'}`}>
+                <div className="border-b border-slate-200 dark:border-slate-800 px-1 pb-1 pt-0.5 text-center">
+                  <p className={`text-xs font-semibold ${isToday ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-600 dark:text-slate-400'}`}>
                     {WEEKDAY_NAMES[(day.getDay() + 6) % 7]}
                   </p>
-                  <p className="text-[10px] text-slate-600">{day.getDate()}日</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-600">{day.getDate()}日</p>
                   {dls.length > 0 && (
                     <div className="mt-0.5 space-y-px" title={dls.map((t) => t.title).join('\n')}>
                       {dls.slice(0, 2).map((t) => (
-                        <p key={t.id} className="truncate text-[9px] text-rose-400/90">
+                        <p key={t.id} className="truncate text-[9px] text-rose-600/90 dark:text-rose-400/90">
                           ⚑ {t.title}
                         </p>
                       ))}
-                      {dls.length > 2 && <p className="text-[9px] text-rose-400/70">⚑ +{dls.length - 2} 个截止</p>}
+                      {dls.length > 2 && <p className="text-[9px] text-rose-600/70 dark:text-rose-400/70">⚑ +{dls.length - 2} 个截止</p>}
                     </div>
                   )}
                 </div>
@@ -137,13 +137,13 @@ export default function Week() {
                   {offIntervals.map((g) => (
                     <div
                       key={`off-${g.start}-${g.end}`}
-                      className="pointer-events-none absolute left-0 right-0 bg-slate-950/45"
+                      className="pointer-events-none absolute left-0 right-0 bg-slate-200/50 dark:bg-slate-950/45"
                       style={{ top: (g.start - ws) * PX_PER_MIN, height: (g.end - g.start) * PX_PER_MIN }}
                     />
                   ))}
 
                   {hours.map((m) => (
-                    <div key={m} className="h-px bg-slate-800/60" style={{ position: 'absolute', top: (m - ws) * PX_PER_MIN, left: 0, right: 0 }} />
+                    <div key={m} className="h-px bg-slate-200/60 dark:bg-slate-800/60" style={{ position: 'absolute', top: (m - ws) * PX_PER_MIN, left: 0, right: 0 }} />
                   ))}
 
                   {items.map((item, idx) => {
@@ -166,7 +166,7 @@ export default function Week() {
                             slotStart: item.kind === 'flexible' ? minutesToHHmm(item.start) : undefined,
                           })
                         }
-                        className={`absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 transition-all duration-150 hover:brightness-125 hover:ring-1 hover:ring-white/30 active:scale-[0.97] ${c.block} ${
+                        className={`absolute left-0.5 right-0.5 overflow-hidden rounded border px-1 py-0.5 transition-all duration-150 hover:brightness-125 hover:ring-1 hover:ring-slate-400/30 hover:dark:ring-white/30 active:scale-[0.97] ${c.block} ${
                           item.kind === 'fixed' ? 'border-dashed' : ''
                         } ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
                           item.task.status === 'done' ? 'opacity-40' : ''

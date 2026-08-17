@@ -82,51 +82,51 @@ export default function Review() {
   }
 
   const areaCls =
-    'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
+    'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600'
 
   return (
     <div className="space-y-4">
       {/* 统计 */}
       <section className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-center">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3 text-center">
           <p className="text-xs text-slate-500">今日完成</p>
-          <p className="text-xl font-bold text-emerald-400">{todayDone.length}</p>
+          <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{todayDone.length}</p>
           <p className="text-[11px] text-slate-500">{fmtDuration(minutesOf(todayDone))}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-center">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3 text-center">
           <p className="text-xs text-slate-500">本周完成</p>
-          <p className="text-xl font-bold text-cyan-400">{weekDone.length}</p>
+          <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">{weekDone.length}</p>
           <p className="text-[11px] text-slate-500">{fmtDuration(minutesOf(weekDone))}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-center">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-3 text-center">
           <p className="text-xs text-slate-500">半月完成</p>
-          <p className="text-xl font-bold text-violet-400">{rangeDone.length}</p>
+          <p className="text-xl font-bold text-violet-600 dark:text-violet-400">{rangeDone.length}</p>
           <p className="text-[11px] text-slate-500">{fmtDuration(minutesOf(rangeDone))}</p>
         </div>
       </section>
 
       {/* 最近 15 天 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-300">最近 15 天科研投入</h3>
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">最近 15 天科研投入</h3>
         <div className="flex h-24 items-end gap-1">
           {last15.map((d) => (
             <div key={d.key} className="group relative flex-1" title={`${d.key}:${d.count} 个任务,${fmtDuration(d.minutes)}`}>
               <div
-                className={`w-full rounded-t ${d.key === todayKey ? 'bg-cyan-500' : 'bg-slate-700 group-hover:bg-slate-600'}`}
+                className={`w-full rounded-t ${d.key === todayKey ? 'bg-cyan-500' : 'bg-slate-300 dark:bg-slate-700 group-hover:bg-slate-400 hover:dark:bg-slate-600'}`}
                 style={{ height: `${Math.max((d.minutes / maxMinutes) * 100, d.minutes > 0 ? 6 : 2)}%` }}
               />
             </div>
           ))}
         </div>
-        <div className="mt-1 flex justify-between text-[10px] text-slate-600">
+        <div className="mt-1 flex justify-between text-[10px] text-slate-400 dark:text-slate-600">
           <span>{last15[0].key.slice(5)}</span>
           <span>今天</span>
         </div>
       </section>
 
       {/* Daily Log(key 随日期变化强制重挂载,跨午夜后表单重置为新一天,避免把昨天的记录误存到今天) */}
-      <section key={todayKey} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">📝 今日记录(2-5 分钟)</h3>
+      <section key={todayKey} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
+        <h3 className="mb-1 text-sm font-semibold text-slate-700 dark:text-slate-300">📝 今日记录(2-5 分钟)</h3>
         <p className="mb-3 text-[11px] text-slate-500">每天只记三件事:完成了什么、遇到什么问题、明天做什么。</p>
         <div className="space-y-3">
           <div>
@@ -151,9 +151,9 @@ export default function Review() {
       </section>
 
       {/* 半月报 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-300">📄 半月报草稿</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">📄 半月报草稿</h3>
           <span className="text-[11px] text-slate-500">
             {dateKey(halfStart)} ~ {dateKey(halfEnd)}
           </span>
@@ -165,7 +165,7 @@ export default function Review() {
         <button
           onClick={generate}
           disabled={generating}
-          className="mb-3 w-full rounded-lg border border-violet-700 bg-violet-950/50 py-2 text-sm text-violet-300 transition hover:bg-violet-900/50 disabled:opacity-50"
+          className="mb-3 w-full rounded-lg border border-violet-400 dark:border-violet-700 bg-violet-100/50 dark:bg-violet-950/50 py-2 text-sm text-violet-700 dark:text-violet-300 transition hover:bg-violet-200/50 hover:dark:bg-violet-900/50 disabled:opacity-50"
         >
           {generating ? '生成中,请稍候…' : '生成半月报草稿'}
         </button>
@@ -174,7 +174,7 @@ export default function Review() {
             <textarea className={`${areaCls} font-mono text-xs`} rows={16} value={report} onChange={(e) => setReport(e.target.value)} />
             <button
               onClick={() => navigator.clipboard?.writeText(report).then(() => alert('已复制到剪贴板'))}
-              className="w-full rounded-lg border border-slate-700 py-2 text-xs text-slate-400 transition hover:text-slate-200"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-700 py-2 text-xs text-slate-600 dark:text-slate-400 transition hover:text-slate-800 hover:dark:text-slate-200"
             >
               复制全文
             </button>

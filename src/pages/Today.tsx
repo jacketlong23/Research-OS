@@ -100,34 +100,34 @@ export default function Today() {
   return (
     <div className="animate-fade-in space-y-4">
       {/* 顶部状态卡 */}
-      <section className="rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/40 p-4">
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-slate-900 to-slate-900/40 p-4">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-slate-500">Today · {todayKey}</p>
-            <h2 className="text-2xl font-bold text-slate-100">{fmtCnDate(now)}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{fmtCnDate(now)}</h2>
           </div>
           <button
             onClick={handleReschedule}
-            className="rounded-lg border border-cyan-700 bg-cyan-950/60 px-3 py-2 text-sm text-cyan-300 transition hover:bg-cyan-900/60"
+            className="rounded-lg border border-cyan-400 dark:border-cyan-700 bg-cyan-100/60 dark:bg-cyan-950/60 px-3 py-2 text-sm text-cyan-700 dark:text-cyan-300 transition hover:bg-cyan-200/60 hover:dark:bg-cyan-900/60"
           >
             🔄 智能重新安排
           </button>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-lg bg-slate-800/60 p-2">
+          <div className="rounded-lg bg-slate-200/60 dark:bg-slate-800/60 p-2">
             <p className="text-xs text-slate-500">剩余可用</p>
-            <p className="text-lg font-semibold text-cyan-400">{fmtDuration(remainMin)}</p>
+            <p className="text-lg font-semibold text-cyan-600 dark:text-cyan-400">{fmtDuration(remainMin)}</p>
           </div>
-          <div className="rounded-lg bg-slate-800/60 p-2">
+          <div className="rounded-lg bg-slate-200/60 dark:bg-slate-800/60 p-2">
             <p className="text-xs text-slate-500">当前任务</p>
-            <p className="truncate text-sm font-medium text-slate-200" title={current?.task.title}>
+            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200" title={current?.task.title}>
               {current ? `${current.task.title}` : '—'}
             </p>
             <p className="text-[11px] text-slate-500">{current ? `至 ${minutesToHHmm(current.end)}` : '空闲'}</p>
           </div>
-          <div className="rounded-lg bg-slate-800/60 p-2">
+          <div className="rounded-lg bg-slate-200/60 dark:bg-slate-800/60 p-2">
             <p className="text-xs text-slate-500">下一任务</p>
-            <p className="truncate text-sm font-medium text-slate-200" title={next?.task.title}>
+            <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200" title={next?.task.title}>
               {next ? next.task.title : '—'}
             </p>
             <p className="text-[11px] text-slate-500">{next ? `${minutesToHHmm(next.start)} 开始` : '无'}</p>
@@ -135,8 +135,8 @@ export default function Today() {
         </div>
 
         {rescheduleMsg && (
-          <div className="animate-fade-in mt-3 rounded-lg bg-cyan-950/30 px-3 py-2 text-xs leading-5">
-            <p className="text-cyan-300">✓ 已重新安排:{rescheduleMsg}</p>
+          <div className="animate-fade-in mt-3 rounded-lg bg-cyan-100/30 dark:bg-cyan-950/30 px-3 py-2 text-xs leading-5">
+            <p className="text-cyan-700 dark:text-cyan-300">✓ 已重新安排:{rescheduleMsg}</p>
             <p className="mt-0.5 text-slate-500">
               规则:避开固定事件 · 按截止紧迫/重要度/阻塞关系评分排序 · 单块 ≤ {settings.deep_max_minutes} 分钟 · 块间留{' '}
               {settings.break_minutes} 分钟缓冲 · 每日排程 ≤ 工作时间的 {Math.round(settings.fill_ratio * 100)}% ·
@@ -147,14 +147,14 @@ export default function Today() {
       </section>
 
       {/* Big 3 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-300">🎯 Today&apos;s Big 3</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">🎯 Today&apos;s Big 3</h3>
           {big3.length > 0 && (
             <button
               onClick={handleExplain}
               disabled={explaining}
-              className="rounded-lg border border-cyan-700 bg-cyan-950/50 px-2.5 py-1 text-xs text-cyan-300 transition hover:bg-cyan-900/50 disabled:opacity-50"
+              className="rounded-lg border border-cyan-400 dark:border-cyan-700 bg-cyan-100/50 dark:bg-cyan-950/50 px-2.5 py-1 text-xs text-cyan-700 dark:text-cyan-300 transition hover:bg-cyan-200/50 hover:dark:bg-cyan-900/50 disabled:opacity-50"
             >
               {explaining ? 'AI 解读中…' : '🤖 AI 解读'}
             </button>
@@ -169,18 +169,18 @@ export default function Today() {
                 const c = colorClasses(projectOf(t.project_id)?.color)
                 return (
                   <li key={t.id} className="flex items-center gap-2 text-sm">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[11px] font-bold text-slate-400">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-[11px] font-bold text-slate-600 dark:text-slate-400">
                       {i + 1}
                     </span>
                     <span className={`h-2 w-2 shrink-0 rounded-full ${c.dot}`} title={projectOf(t.project_id)?.name ?? '收件箱'} />
-                    <span className="min-w-0 flex-1 truncate text-slate-200">{t.title}</span>
+                    <span className="min-w-0 flex-1 truncate text-slate-800 dark:text-slate-200">{t.title}</span>
                     <span className="shrink-0 text-xs text-slate-500">{fmtDeadlineRelative(t.deadline, now)}</span>
                   </li>
                 )
               })}
             </ol>
             {explanation && (
-              <div className="animate-fade-in mt-3 whitespace-pre-wrap rounded-lg border border-cyan-900/40 bg-cyan-950/20 p-3 text-xs leading-5 text-slate-300">
+              <div className="animate-fade-in mt-3 whitespace-pre-wrap rounded-lg border border-cyan-200/40 dark:border-cyan-900/40 bg-cyan-100/20 dark:bg-cyan-950/20 p-3 text-xs leading-5 text-slate-700 dark:text-slate-300">
                 {explanation}
               </div>
             )}
@@ -192,7 +192,7 @@ export default function Today() {
       <section>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="w-full rounded-xl border border-dashed border-slate-700 py-2.5 text-sm text-slate-400 transition hover:border-cyan-700 hover:text-cyan-400"
+          className="w-full rounded-xl border border-dashed border-slate-300 dark:border-slate-700 py-2.5 text-sm text-slate-600 dark:text-slate-400 transition hover:border-cyan-400 hover:dark:border-cyan-700 hover:text-cyan-600 hover:dark:text-cyan-400"
         >
           {showForm ? '收起新增任务' : '+ 新任务'}
         </button>
@@ -210,8 +210,8 @@ export default function Today() {
       </section>
 
       {/* 时间轴 */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-300">
+      <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
           今日时间轴{' '}
           <span className="ml-1 text-xs font-normal text-slate-500">
             {formatWorkPeriods(settings)} · 点击时间块编辑 · 点击空白处在该时刻新建任务
@@ -234,23 +234,23 @@ export default function Today() {
           {offIntervals.map((g) => (
             <div
               key={`off-${g.start}-${g.end}`}
-              className="pointer-events-none absolute left-14 right-1 rounded-md bg-slate-950/45"
+              className="pointer-events-none absolute left-14 right-1 rounded-md bg-slate-200/50 dark:bg-slate-950/45"
               style={{ top: (g.start - ws) * PX_PER_MIN, height: (g.end - g.start) * PX_PER_MIN }}
             />
           ))}
 
           {hours.map((m) => (
             <div key={m} className="pointer-events-none absolute inset-x-0 flex items-center" style={{ top: (m - ws) * PX_PER_MIN }}>
-              <span className="-translate-y-2 w-12 shrink-0 text-right text-[10px] text-slate-600">{minutesToHHmm(m)}</span>
-              <div className="ml-2 h-px flex-1 bg-slate-800/80" />
+              <span className="-translate-y-2 w-12 shrink-0 text-right text-[10px] text-slate-400 dark:text-slate-600">{minutesToHHmm(m)}</span>
+              <div className="ml-2 h-px flex-1 bg-slate-200/80 dark:bg-slate-800/80" />
             </div>
           ))}
 
           {/* 当前时间线 */}
           {mins >= ws && mins <= we && (
             <div className="pointer-events-none absolute inset-x-0 z-10 flex items-center" style={{ top: nowOffset }}>
-              <span className="w-12 shrink-0 text-right text-[10px] font-bold text-rose-400">{minutesToHHmm(mins)}</span>
-              <div className="now-line-pulse ml-1 h-1.5 w-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.9)]" />
+              <span className="w-12 shrink-0 text-right text-[10px] font-bold text-rose-600 dark:text-rose-400">{minutesToHHmm(mins)}</span>
+              <div className="now-line-pulse ml-1 h-1.5 w-1.5 rounded-full bg-rose-600 dark:bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.9)]" />
               <div className="h-px flex-1 bg-rose-500/70" />
             </div>
           )}
@@ -268,7 +268,7 @@ export default function Today() {
                     slotStart: item.kind === 'flexible' ? minutesToHHmm(item.start) : undefined,
                   })
                 }}
-                className={`absolute left-14 right-1 z-[5] cursor-pointer overflow-hidden rounded-lg border px-2 py-1 transition-all duration-150 hover:brightness-125 hover:ring-1 hover:ring-white/40 active:scale-[0.98] active:brightness-150 ${c.block} ${
+                className={`absolute left-14 right-1 z-[5] cursor-pointer overflow-hidden rounded-lg border px-2 py-1 transition-all duration-150 hover:brightness-125 hover:ring-1 hover:ring-slate-400/40 hover:dark:ring-white/40 active:scale-[0.98] active:brightness-150 ${c.block} ${
                   item.kind === 'fixed' ? 'border-dashed' : ''
                 } ${item.task.status === 'done' ? 'opacity-40' : ''}`}
                 style={{
@@ -288,7 +288,7 @@ export default function Today() {
                         e.stopPropagation()
                         completeTask(item.task.id)
                       }}
-                      className="shrink-0 rounded px-1 text-[11px] text-slate-400 hover:bg-white/10 hover:text-emerald-300"
+                      className="shrink-0 rounded px-1 text-[11px] text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 hover:dark:bg-white/10 hover:text-emerald-700 hover:dark:text-emerald-300"
                       title="标记完成"
                     >
                       ✓
@@ -308,24 +308,24 @@ export default function Today() {
 
       {/* 待安排与警告 */}
       {(waiting.length > 0 || warnings.length > 0) && (
-        <section className="rounded-xl border border-amber-900/40 bg-amber-950/20 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-amber-300/90">⚠ 未安排 / 需注意</h3>
+        <section className="rounded-xl border border-amber-200/40 dark:border-amber-900/40 bg-amber-100/20 dark:bg-amber-950/20 p-4">
+          <h3 className="mb-2 text-sm font-semibold text-amber-700/90 dark:text-amber-300/90">⚠ 未安排 / 需注意</h3>
           <ul className="space-y-1.5">
             {warnings.map((w, i) => {
               const t = tasks.find((x) => x.id === w.taskId)
               if (!t) return null
               return (
-                <li key={`w${i}`} className="flex items-center gap-2 text-sm text-amber-200/80">
+                <li key={`w${i}`} className="flex items-center gap-2 text-sm text-amber-800/80 dark:text-amber-200/80">
                   <span>⚑</span>
                   <span className="min-w-0 flex-1 truncate">{t.title}</span>
-                  <span className="shrink-0 text-xs text-amber-300/60">{w.message}</span>
+                  <span className="shrink-0 text-xs text-amber-700/60 dark:text-amber-300/60">{w.message}</span>
                 </li>
               )
             })}
             {waiting
               .filter((t) => !warnings.some((w) => w.taskId === t.id))
               .map((t) => (
-                <li key={t.id} className="flex items-center gap-2 text-sm text-slate-400">
+                <li key={t.id} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                   <span>◻</span>
                   <span className="min-w-0 flex-1 truncate">{t.title}</span>
                   <span className="shrink-0 text-xs text-slate-500">

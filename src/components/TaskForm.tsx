@@ -23,13 +23,13 @@ interface Props {
 }
 
 const inputCls =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
+  'w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 outline-none transition focus:border-cyan-600'
 const labelCls = 'mb-1 block text-xs text-slate-500'
 const segCls = (active: boolean) =>
   `flex-1 rounded-lg border px-2 py-1.5 text-xs transition ${
     active
-      ? 'border-cyan-600 bg-cyan-950/50 text-cyan-200'
-      : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+      ? 'border-cyan-600 bg-cyan-100/50 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-200'
+      : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-500 hover:text-slate-800 hover:dark:text-slate-200'
   }`
 
 export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
@@ -188,9 +188,9 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
     setRepeatDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 p-4">
       {placeAtMinutes !== undefined && arrangeMode === 'auto' && (
-        <p className="rounded-lg bg-cyan-950/40 px-3 py-2 text-xs text-cyan-300">
+        <p className="rounded-lg bg-cyan-100/40 dark:bg-cyan-950/40 px-3 py-2 text-xs text-cyan-700 dark:text-cyan-300">
           ⏱ 将优先安排在 {minutesToHHmm(placeAtMinutes)} 开始(若该时段被占用则自动找最近的空闲时间)
         </p>
       )}
@@ -208,7 +208,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
             type="button"
             onClick={handleParse}
             disabled={parsing}
-            className="shrink-0 rounded-lg border border-cyan-700 bg-cyan-950/50 px-3 py-2 text-sm text-cyan-300 transition hover:bg-cyan-900/50 disabled:opacity-50"
+            className="shrink-0 rounded-lg border border-cyan-400 dark:border-cyan-700 bg-cyan-100/50 dark:bg-cyan-950/50 px-3 py-2 text-sm text-cyan-700 dark:text-cyan-300 transition hover:bg-cyan-200/50 hover:dark:bg-cyan-900/50 disabled:opacity-50"
           >
             {parsing ? '解析中…' : '解析'}
           </button>
@@ -268,23 +268,23 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
         <div className="flex items-end gap-4 pb-1">
           {type === 'flexible' ? (
             <>
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-400">
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                 <input type="checkbox" checked={splittable} onChange={(e) => setSplittable(e.target.checked)} className="accent-cyan-500" />
                 允许拆分
               </label>
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-400">
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                 <input type="checkbox" checked={blocking} onChange={(e) => setBlocking(e.target.checked)} className="accent-cyan-500" />
                 阻塞后续
               </label>
             </>
           ) : (
-            <p className="text-xs text-slate-600">固定事件不会被自动移动</p>
+            <p className="text-xs text-slate-400 dark:text-slate-600">固定事件不会被自动移动</p>
           )}
         </div>
       </div>
 
       {type === 'flexible' && (
-        <div className="space-y-2 rounded-lg border border-slate-800 p-3">
+        <div className="space-y-2 rounded-lg border border-slate-200 dark:border-slate-800 p-3">
           <label className={labelCls}>安排方式</label>
           <div className="flex gap-2">
             <button type="button" onClick={() => setArrangeMode('auto')} className={segCls(arrangeMode === 'auto')}>
@@ -314,8 +314,8 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
                         onClick={() => setPickedSlot(key)}
                         className={`block w-full rounded-lg border px-3 py-1.5 text-left text-xs transition ${
                           pickedSlot === key
-                            ? 'border-cyan-600 bg-cyan-950/50 text-cyan-200'
-                            : 'border-slate-700 text-slate-300 hover:border-slate-500'
+                            ? 'border-cyan-600 bg-cyan-100/50 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-200'
+                            : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-500'
                         }`}
                       >
                         {g.day} · {minutesToHHmm(g.start)}–{minutesToHHmm(g.end)}
@@ -348,7 +348,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
       )}
 
       {type === 'fixed' && (
-        <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-800 p-3">
+        <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 dark:border-slate-800 p-3">
           <div>
             <label className={labelCls}>开始时间</label>
             <input type="time" className={inputCls} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
@@ -371,8 +371,8 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
                   onClick={() => toggleDay(i)}
                   className={`h-7 w-7 rounded-full border text-xs transition ${
                     repeatDays.includes(i)
-                      ? 'border-cyan-500 bg-cyan-500/20 text-cyan-300'
-                      : 'border-slate-700 text-slate-500 hover:border-slate-500'
+                      ? 'border-cyan-500 bg-cyan-500/20 text-cyan-700 dark:text-cyan-300'
+                      : 'border-slate-300 dark:border-slate-700 text-slate-500 hover:border-slate-500'
                   }`}
                 >
                   {d}
@@ -387,7 +387,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
         <button
           type="button"
           onClick={onDone}
-          className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-400 transition hover:text-slate-200"
+          className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 transition hover:text-slate-800 hover:dark:text-slate-200"
         >
           取消
         </button>
@@ -400,7 +400,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
           {arrangeMode === 'auto' ? '添加并智能安排' : '添加并手动安排'}
         </button>
       </div>
-      {submitErr && <p className="text-right text-xs text-rose-400">{submitErr}</p>}
+      {submitErr && <p className="text-right text-xs text-rose-600 dark:text-rose-400">{submitErr}</p>}
     </div>
   )
 }

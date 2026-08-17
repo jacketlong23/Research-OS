@@ -1,4 +1,4 @@
-/** 主题切换工具:通过 <html class="light"> 切换亮/暗色,持久化到 localStorage */
+/** 主题切换工具:通过 <html class="dark"> 切换暗/亮色,默认暗色,持久化到 localStorage */
 
 export type Theme = 'dark' | 'light'
 
@@ -13,7 +13,8 @@ export function getTheme(): Theme {
 }
 
 export function applyTheme(theme: Theme) {
-  document.documentElement.classList.toggle('light', theme === 'light')
+  // 暗色 = 加 .dark class;亮色 = 移除
+  document.documentElement.classList.toggle('dark', theme === 'dark')
   try {
     localStorage.setItem(KEY, theme)
   } catch {
