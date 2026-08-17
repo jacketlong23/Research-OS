@@ -20,30 +20,30 @@
 
 目前主要工作线包括：
 
--   **REDACTED_RESEARCH_METHOD 数据处理**
+-   **实验数据处理**
 
-    -   GMTSAR + Dolphin
-    -   涪城一号 C 波段REDACTED_RESEARCH_AREA数据
-    -   当前主要问题：大气效应难以有效去除
+    -   Python + pandas
+    -   公开实验数据集
+    -   当前主要问题：数据噪声难以有效去除
 
--   **REDACTED_RESEARCH_METHOD 理论学习**
+-   **专业课程学习**
 
-    -   当前学习到 REDACTED_RESEARCH_METHOD 干涉几何
-    -   下一步：基准面模型、高程模型、地形相位模型推导
+    -   当前学习到 核心章节
+    -   下一步：基础模型、进阶模型、专题模型推导
 
--   **REDACTED_RESEARCH_PROJECT开发**
+-   **数据分析工具开发**
 
--   **REDACTED_RESEARCH_METHOD 流程监控 Skill**
+-   **数据处理流程监控工具**
 
     -   后续再逐步开发
     -   当前不是最高优先级
 
 -   **每日论文阅读**
 
-    -   REDACTED_RESEARCH_METHOD 高精度形变监测
-    -   REDACTED_RESEARCH_METHOD 相位解缠
-    -   REDACTED_RESEARCH_METHOD 后端应用
-    -   建筑物 / 基础设施风险分级等
+    -   高精度监测方法
+    -   算法优化
+    -   工程应用
+    -   风险评估等
 
 -   **临时任务**
 
@@ -117,7 +117,7 @@
 -   保留临时任务和 Debug 超时空间；
 -   午间可以设置休息或低强度任务区间。
 
-这样即使突然出现导师任务、项目任务或者 REDACTED_RESEARCH_METHOD Debug
+这样即使突然出现导师任务、项目任务或者 数据处理 Debug
 超时，也不会导致整天计划完全崩溃。
 
 ------------------------------------------------------------------------
@@ -136,15 +136,15 @@
 
 🎯 Today's Big 3
 
-1. REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD 大气残差排查
-2. REDACTED_RESEARCH_METHOD 地形相位模型推导
-3. REDACTED_RESEARCH_TOPIC Agent 开发
+1. 实验数据噪声排查
+2. 课程专题模型推导
+3. 数据分析工具开发
 
 
 09:00 ─────────────────────────────
 
-       REDACTED_RESEARCH_METHOD 理论学习
-       地形相位模型推导
+       专业课程学习
+       专题模型推导
        预计 2 h
 
 11:00 ─────────────────────────────
@@ -153,7 +153,7 @@
 
 11:20 ─────────────────────────────
 
-       REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD 数据处理
+       实验数据处理
        预计 2 h
 
 13:20 ─────────────────────────────
@@ -162,7 +162,7 @@
 
 14:30 ─────────────────────────────
 
-       REDACTED_RESEARCH_TOPIC Agent
+       数据分析工具
        预计 1.5 h
 
 16:00 ─────────────────────────────
@@ -193,19 +193,19 @@
 ``` text
          周一        周二        周三        周四        周五
 
-09:00   REDACTED_RESEARCH_METHOD理论
+09:00   课程学习
         │
 10:00   │
         │
 11:00   ┘
 
-14:00               REDACTED_RESEARCH_AREA处理
+14:00               数据处理
                     │
 15:00               │
                     │
 16:00               ┘
 
-17:00                           REDACTED_RESEARCH_TOPICAgent
+17:00                           数据分析
                                 │
 18:00                           ┘
 ```
@@ -229,8 +229,8 @@
 ``` json
 {
   "id": "task_001",
-  "title": "REDACTED_RESEARCH_AREA大气误差排查",
-  "project": "Maoxian REDACTED_RESEARCH_METHOD",
+  "title": "实验数据噪声排查",
+  "project": "Data Processing",
   "duration_minutes": 120,
   "deadline": "2026-08-17T18:00:00",
   "importance": 5,
@@ -285,11 +285,11 @@
 
 例如：
 
--   REDACTED_RESEARCH_METHOD 数据处理；
+-   实验数据处理；
 -   理论学习；
 -   写代码；
 -   阅读论文；
--   REDACTED_RESEARCH_TOPIC Agent 开发。
+-   数据分析工具开发。
 
 例如：
 
@@ -315,7 +315,7 @@
 ### 任务 A
 
 ``` text
-REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD 大气问题
+实验数据噪声问题
 预计：2 h
 截止：今天 18:00
 重要度：5
@@ -325,7 +325,7 @@ REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD 大气问题
 ### 任务 B
 
 ``` text
-REDACTED_RESEARCH_TOPIC Agent 页面
+数据分析工具页面
 预计：1.5 h
 截止：今天 18:00
 重要度：4
@@ -335,8 +335,8 @@ REDACTED_RESEARCH_TOPIC Agent 页面
 系统可以推荐：
 
 ``` text
-14:00–16:00  REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD
-16:15–17:45  REDACTED_RESEARCH_TOPIC Agent
+14:00–16:00  实验数据处理
+16:15–17:45  数据分析工具
 ```
 
 即使 B 更短，也不一定先做 B。
@@ -404,7 +404,7 @@ LLM / DeepSeek 后续可以负责：
 
 例如：
 
-> REDACTED_RESEARCH_METHOD 地形相位模型推导：2 h
+> 课程专题模型推导：2 h
 
 应该优先安排：
 
@@ -434,7 +434,7 @@ LLM / DeepSeek 后续可以负责：
 
 -   理论推导；
 -   写论文；
--   REDACTED_RESEARCH_METHOD Debug；
+-   数据处理 Debug；
 -   编程开发；
 
 优先保证连续深度工作时间。
@@ -481,31 +481,31 @@ Deadline：明天下午
 例如：
 
 ``` text
-REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD
+实验数据处理
 ████████░░  60%
 
 当前：
-大气残差问题
+数据噪声问题
 
 下一步：
-验证轨道残差 / 高程相关性
+验证数据一致性 / 相关性
 
 
-REDACTED_RESEARCH_PROJECT
+数据分析工具
 ██████░░░░  45%
 
 当前：
 XXX 模块开发
 
 
-REDACTED_RESEARCH_METHOD 理论
+专业课程学习
 █████░░░░░  40%
 
 当前：
-干涉几何
+核心章节
 
 下一步：
-基准面 / 高程 / 地形相位模型
+基础 / 进阶 / 专题模型
 ```
 
 项目进度不要求非常精确。
@@ -524,14 +524,14 @@ REDACTED_RESEARCH_METHOD 理论
 {
   "date": "2026-08-16",
   "completed": [
-    "完成地形相位模型推导",
-    "完成REDACTED_RESEARCH_AREA大气残差第一轮排查"
+    "完成专题模型推导",
+    "完成实验数据噪声第一轮排查"
   ],
   "problems": [
-    "大气校正后仍存在长波残差"
+    "数据校正后仍存在长波噪声"
   ],
   "next": [
-    "检查轨道残差"
+    "检查数据一致性"
   ]
 }
 ```
