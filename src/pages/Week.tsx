@@ -3,7 +3,7 @@ import { useProjectsStore, useScheduleStore, useSettingsStore, useTasksStore } f
 import { dayTimeline, moveTaskDay } from '../engine/scheduler'
 import { colorClasses } from '../lib/colors'
 import { addDays, dateKey, fmtCnDate, minutesToHHmm, startOfWeek, WEEKDAY_NAMES } from '../lib/time'
-import { workDayBounds } from '../lib/workPeriods'
+import { workDayBounds, offWorkIntervals } from '../lib/workPeriods'
 import { useNow } from '../lib/useNow'
 import TaskBlockEditor from '../components/TaskBlockEditor'
 
@@ -26,6 +26,7 @@ export default function Week() {
   const todayKey = dateKey(now)
 
   const { start: ws, end: we } = workDayBounds(settings)
+  const offIntervals = offWorkIntervals(settings)
   const hours: number[] = []
   for (let h = Math.floor(ws / 60); h <= Math.floor(we / 60); h++) hours.push(h * 60)
 
@@ -132,6 +133,15 @@ export default function Week() {
 
                 {/* 网格 */}
                 <div className="relative" style={{ height: (we - ws) * PX_PER_MIN }}>
+                  {/* 未启用时段(午休/晚间)灰色底 */}
+                  {offIntervals.map((g) => (
+                    <div
+                      key={`off-${g.start}-${g.end}`}
+                      className="pointer-events-none absolute left-0 right-0 bg-slate-950/45"
+                      style={{ top: (g.start - ws) * PX_PER_MIN, height: (g.end - g.start) * PX_PER_MIN }}
+                    />
+                  ))}
+
                   {hours.map((m) => (
                     <div key={m} className="h-px bg-slate-800/60" style={{ position: 'absolute', top: (m - ws) * PX_PER_MIN, left: 0, right: 0 }} />
                   ))}

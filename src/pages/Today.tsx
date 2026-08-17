@@ -11,7 +11,7 @@ import {
 } from '../engine/scheduler'
 import { colorClasses } from '../lib/colors'
 import { addDays, dateKey, fmtCnDate, fmtDeadlineRelative, fmtDuration, hhmmToMinutes, minutesOfDay, minutesToHHmm } from '../lib/time'
-import { formatWorkPeriods, workDayBounds } from '../lib/workPeriods'
+import { formatWorkPeriods, offWorkIntervals, workDayBounds } from '../lib/workPeriods'
 import { useNow } from '../lib/useNow'
 import { explainRecommendation } from '../ai/client'
 import TaskForm from '../components/TaskForm'
@@ -50,6 +50,7 @@ export default function Today() {
 
   const items = dayTimeline(tasks, schedule, now)
   const { start: ws, end: we } = workDayBounds(settings)
+  const offIntervals = offWorkIntervals(settings)
   const mins = minutesOfDay(now)
   const todayNow = new Date(now)
 
@@ -229,6 +230,15 @@ export default function Today() {
             setShowForm(true)
           }}
         >
+          {/* 未启用时段(午休/晚间)灰色底,提示此处不排任务 */}
+          {offIntervals.map((g) => (
+            <div
+              key={`off-${g.start}-${g.end}`}
+              className="pointer-events-none absolute left-14 right-1 rounded-md bg-slate-950/45"
+              style={{ top: (g.start - ws) * PX_PER_MIN, height: (g.end - g.start) * PX_PER_MIN }}
+            />
+          ))}
+
           {hours.map((m) => (
             <div key={m} className="pointer-events-none absolute inset-x-0 flex items-center" style={{ top: (m - ws) * PX_PER_MIN }}>
               <span className="-translate-y-2 w-12 shrink-0 text-right text-[10px] text-slate-600">{minutesToHHmm(m)}</span>

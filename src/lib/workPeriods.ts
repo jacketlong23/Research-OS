@@ -31,6 +31,18 @@ export function workDayBounds(settings: Settings): WorkInterval {
   return { start: ivs[0].start, end: ivs[ivs.length - 1].end }
 }
 
+/** 时间轴范围内、位于启用工作时段之间的"非工作"区间(午休、晚餐间隔等),用于渲染灰色底 */
+export function offWorkIntervals(settings: Settings): WorkInterval[] {
+  const ivs = enabledWorkIntervals(settings)
+  const gaps: WorkInterval[] = []
+  for (let i = 1; i < ivs.length; i++) {
+    const prev = ivs[i - 1]
+    const cur = ivs[i]
+    if (cur.start > prev.end) gaps.push({ start: prev.end, end: cur.start })
+  }
+  return gaps
+}
+
 /** 某区间与启用工作时段重叠的总分钟数 */
 export function overlapWithWork(interval: WorkInterval, settings: Settings): number {
   return enabledWorkIntervals(settings).reduce((acc, w) => {
