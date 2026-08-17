@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import type { Schedule, Settings, Task } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
 import {
+  candidateGaps,
   dayCapacity,
   deleteSlot,
   findConflict,
   freeGaps,
   insertTaskAtTime,
   insertTaskIncrementally,
+  placeTaskManually,
   removeAllSlots,
   reschedule,
   splitChunks,
@@ -363,5 +365,44 @@ describe('多工作时段', () => {
     // 与工作时段重叠:上午 10:00-11:30(90 分钟)+ 下午 14:00-15:00(60 分钟)= 150 分钟
     // 启用工作总长 360 分钟;容量 = round(0.78 × (360-150)) = 164
     expect(dayCapacity(NOW, [fixed], SETTINGS, 0)).toBe(164)
+  })
+})
+
+describe('candidateGaps(手动选时段的候选空闲段)', () => {
+  it('返回未来几天的空闲段,排除 fixed 事件与已排任务', () => {
+    const fixed = fixedToday('14:00', '15:00')
+    const gaps = candidateGaps([fixed], {}, SETTINGS, NOW, 2, 30)
+    const today = gaps.filter((g) => g.day === TODAY)
+    const tomorrow = gaps.filter((g) => g.day === TOMORROW)
+    // 今天:上午 09:00-11:30 + 下午 15:00-17:30(fixed 14:00-15:00 被排除)
+    expect(today.some((g) => g.start === 540 && g.end === 690)).toBe(true)
+    expect(today.some((g) => g.start === 900 && g.end === 1050)).toBe(true)
+    expect(today.some((g) => g.start === 840)).toBe(false) // 14:00 被 fixed 占用
+    // 明天:无 fixed,上午 + 下午两个时段
+    expect(tomorrow.length).toBe(2)
+  })
+})
+
+describe('placeTaskManually(手动指定起止)', () => {
+  it('把任务放到指定日期的起止时间', () => {
+    const t = flexTask({ duration_minutes: 60 })
+    const day = new Date(2026, 7, 12)
+    const next = placeTaskManually(t, {}, [t], day, 14 * 60, 15 * 60)
+    expect(next).not.toBeNull()
+    expect(next![TODAY]).toEqual([{ taskId: t.id, start: '14:00', end: '15:00' }])
+  })
+
+  it('与 fixed 事件冲突时返回 null,不冲突则成功', () => {
+    const fixed = fixedToday('14:00', '15:30')
+    const t = flexTask({ duration_minutes: 60 })
+    const day = new Date(2026, 7, 12)
+    expect(placeTaskManually(t, {}, [fixed, t], day, 14 * 60, 15 * 60)).toBeNull()
+    expect(placeTaskManually(t, {}, [fixed, t], day, 16 * 60, 17 * 60)).not.toBeNull()
+  })
+
+  it('时间非法(end<=start)返回 null', () => {
+    const t = flexTask({ duration_minutes: 60 })
+    const day = new Date(2026, 7, 12)
+    expect(placeTaskManually(t, {}, [t], day, 15 * 60, 14 * 60)).toBeNull()
   })
 })

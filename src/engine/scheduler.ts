@@ -552,3 +552,60 @@ export function removeAllSlots(schedule: Schedule, taskId: string): Schedule {
   }
   return next
 }
+
+/**
+ * 未来 days 天内、长度 >= minLen 分钟的空闲时间段(供"手动选时段"使用)。
+ * 排除固定事件与已排任务;今天会自动裁掉已过去的时间,并只返回启用工作时段内的空隙。
+ */
+export function candidateGaps(
+  tasks: Task[],
+  schedule: Schedule,
+  settings: Settings,
+  now: Date,
+  days = 7,
+  minLen = 30,
+): { day: string; start: number; end: number }[] {
+  const result: { day: string; start: number; end: number }[] = []
+  const dayStart = startOfDay(now)
+  for (let d = 0; d < days; d++) {
+    const day = addDays(dayStart, d)
+    const key = dateKey(day)
+    const busy: Interval[] = [
+      ...fixedEventsOn(tasks, day).map((f) => ({ start: f.start, end: f.end })),
+      ...(schedule[key] ?? []).map((s) => ({ start: hhmmToMinutes(s.start), end: hhmmToMinutes(s.end) })),
+    ]
+    for (const g of freeGaps(day, busy, settings, now)) {
+      if (g.end - g.start >= minLen) result.push({ day: key, start: g.start, end: g.end })
+    }
+  }
+  return result
+}
+
+/**
+ * 手动放置:把任务作为一个时间块放到指定日期的 [startMinutes, endMinutes]。
+ * 时间非法(end<=start)或与固定事件/已排任务冲突时返回 null。
+ */
+export function placeTaskManually(
+  task: Task,
+  schedule: Schedule,
+  tasks: Task[],
+  day: Date,
+  startMinutes: number,
+  endMinutes: number,
+): Schedule | null {
+  if (endMinutes <= startMinutes) return null
+  const key = dateKey(day)
+  const busy: Interval[] = [
+    ...fixedEventsOn(tasks, day).map((f) => ({ start: f.start, end: f.end })),
+    ...(schedule[key] ?? []).map((s) => ({ start: hhmmToMinutes(s.start), end: hhmmToMinutes(s.end) })),
+  ]
+  const merged = mergeIntervals(busy)
+  if (merged.some((m) => startMinutes < m.end && endMinutes > m.start)) return null
+  const slot: ScheduleSlot = {
+    taskId: task.id,
+    start: minutesToHHmm(startMinutes),
+    end: minutesToHHmm(endMinutes),
+  }
+  const slots = [...(schedule[key] ?? []), slot].sort((a, b) => hhmmToMinutes(a.start) - hhmmToMinutes(b.start))
+  return { ...schedule, [key]: slots }
+}

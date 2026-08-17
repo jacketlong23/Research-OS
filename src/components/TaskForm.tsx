@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { Task, TaskType } from '../types'
 import { useProjectsStore, useScheduleStore, useSettingsStore, useTasksStore } from '../store'
-import { insertTaskAtTime, insertTaskIncrementally } from '../engine/scheduler'
-import { hhmmToMinutes, isoToLocalInput, localInputToISO, minutesToHHmm } from '../lib/time'
+import { candidateGaps, insertTaskAtTime, insertTaskIncrementally, placeTaskManually } from '../engine/scheduler'
+import { hhmmToMinutes, isoToLocalInput, localInputToISO, minutesToHHmm, parseDateKey } from '../lib/time'
 import { parseTaskNL } from '../ai/client'
 
 export interface TaskFormInitial {
@@ -25,11 +25,18 @@ interface Props {
 const inputCls =
   'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-600'
 const labelCls = 'mb-1 block text-xs text-slate-500'
+const segCls = (active: boolean) =>
+  `flex-1 rounded-lg border px-2 py-1.5 text-xs transition ${
+    active
+      ? 'border-cyan-600 bg-cyan-950/50 text-cyan-200'
+      : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+  }`
 
 export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
   const projects = useProjectsStore((s) => s.projects)
   const settings = useSettingsStore((s) => s.settings)
   const addTask = useTasksStore((s) => s.addTask)
+  const deleteTask = useTasksStore((s) => s.deleteTask)
   const tasks = useTasksStore((s) => s.tasks)
   const setSchedule = useScheduleStore((s) => s.setSchedule)
   const schedule = useScheduleStore((s) => s.schedule)
@@ -53,6 +60,16 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
   const [repeatDays, setRepeatDays] = useState<number[]>([]) // 0=周日…6=周六
   const [startTime, setStartTime] = useState('14:00')
   const [endTime, setEndTime] = useState('15:30')
+
+  // flexible 手动安排
+  const [arrangeMode, setArrangeMode] = useState<'auto' | 'pick' | 'manual'>('auto')
+  const [pickedSlot, setPickedSlot] = useState('')
+  const [manualDate, setManualDate] = useState('')
+  const [manualStart, setManualStart] = useState('09:00')
+  const [manualEnd, setManualEnd] = useState('10:00')
+
+  // 候选空闲时间段(供"手动选时段"用)
+  const gaps = candidateGaps(tasks, schedule, settings, new Date(), 7, 30)
 
   const handleParse = async () => {
     if (!nl.trim()) return
@@ -88,6 +105,21 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
         return
       }
     }
+    // flexible 手动安排的预校验(在添加任务之前,避免留下孤儿任务)
+    if (type === 'flexible' && arrangeMode === 'manual') {
+      if (!manualDate) {
+        setSubmitErr('请选择手动安排的日期')
+        return
+      }
+      if (hhmmToMinutes(manualEnd) <= hhmmToMinutes(manualStart)) {
+        setSubmitErr('结束时间必须晚于开始时间')
+        return
+      }
+    }
+    if (type === 'flexible' && arrangeMode === 'pick' && !pickedSlot) {
+      setSubmitErr('请选择一个候选时间段')
+      return
+    }
     setSubmitErr('')
     // 空输入/0 回退默认 60 分钟;其余至少 15 分钟
     const durationVal = Number(duration) || 60
@@ -114,11 +146,40 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
       })
     } else {
       task = addTask(base)
-      const { schedule: next } =
-        placeAtMinutes !== undefined
-          ? insertTaskAtTime(task, schedule, [...tasks, task], settings, new Date(), placeAtMinutes)
-          : insertTaskIncrementally(task, schedule, [...tasks, task], settings, new Date())
-      setSchedule(next)
+      const now = new Date()
+      const allTasks = [...tasks, task]
+      let err = ''
+      if (arrangeMode === 'manual') {
+        const next = placeTaskManually(
+          task,
+          schedule,
+          allTasks,
+          parseDateKey(manualDate),
+          hhmmToMinutes(manualStart),
+          hhmmToMinutes(manualEnd),
+        )
+        if (!next) err = '该时间段已有安排(与固定事件或其他任务冲突)'
+        else setSchedule(next)
+      } else if (arrangeMode === 'pick') {
+        const [day, sStr, eStr] = pickedSlot.split('|')
+        const s = Number(sStr)
+        const end = Math.min(s + durationVal, Number(eStr))
+        const next = placeTaskManually(task, schedule, allTasks, parseDateKey(day), s, end)
+        if (!next) err = '该时间段已被占用,请重新选择'
+        else setSchedule(next)
+      } else {
+        const { schedule: next } =
+          placeAtMinutes !== undefined
+            ? insertTaskAtTime(task, schedule, allTasks, settings, now, placeAtMinutes)
+            : insertTaskIncrementally(task, schedule, allTasks, settings, now)
+        setSchedule(next)
+      }
+      if (err) {
+        // 手动放置冲突:回滚刚添加的任务,避免留下没排程的孤儿任务
+        deleteTask(task.id)
+        setSubmitErr(err)
+        return
+      }
     }
     onDone()
   }
@@ -128,7 +189,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-      {placeAtMinutes !== undefined && (
+      {placeAtMinutes !== undefined && arrangeMode === 'auto' && (
         <p className="rounded-lg bg-cyan-950/40 px-3 py-2 text-xs text-cyan-300">
           ⏱ 将优先安排在 {minutesToHHmm(placeAtMinutes)} 开始(若该时段被占用则自动找最近的空闲时间)
         </p>
@@ -200,7 +261,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
         <div>
           <label className={labelCls}>类型</label>
           <select className={inputCls} value={type} onChange={(e) => setType(e.target.value as TaskType)}>
-            <option value="flexible">弹性任务(自动排时间)</option>
+            <option value="flexible">弹性任务(可自动/手动安排)</option>
             <option value="fixed">固定事件(上课/会议)</option>
           </select>
         </div>
@@ -221,6 +282,70 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
           )}
         </div>
       </div>
+
+      {type === 'flexible' && (
+        <div className="space-y-2 rounded-lg border border-slate-800 p-3">
+          <label className={labelCls}>安排方式</label>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setArrangeMode('auto')} className={segCls(arrangeMode === 'auto')}>
+              智能安排
+            </button>
+            <button type="button" onClick={() => setArrangeMode('pick')} className={segCls(arrangeMode === 'pick')}>
+              手动选时段
+            </button>
+            <button type="button" onClick={() => setArrangeMode('manual')} className={segCls(arrangeMode === 'manual')}>
+              手动指定时间
+            </button>
+          </div>
+
+          {arrangeMode === 'pick' && (
+            <div>
+              <label className={labelCls}>候选空闲时间段(未来 7 天,按预估耗时放入)</label>
+              <div className="max-h-44 space-y-1 overflow-y-auto pr-1">
+                {gaps.length === 0 ? (
+                  <p className="text-xs text-slate-500">未来 7 天暂无足够长的空闲时段,可改用「智能安排」或「手动指定时间」</p>
+                ) : (
+                  gaps.map((g) => {
+                    const key = `${g.day}|${g.start}|${g.end}`
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setPickedSlot(key)}
+                        className={`block w-full rounded-lg border px-3 py-1.5 text-left text-xs transition ${
+                          pickedSlot === key
+                            ? 'border-cyan-600 bg-cyan-950/50 text-cyan-200'
+                            : 'border-slate-700 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        {g.day} · {minutesToHHmm(g.start)}–{minutesToHHmm(g.end)}
+                        <span className="ml-1 text-slate-500">({Math.round(((g.end - g.start) / 60) * 10) / 10}h)</span>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {arrangeMode === 'manual' && (
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className={labelCls}>日期</label>
+                <input type="date" className={inputCls} value={manualDate} onChange={(e) => setManualDate(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>开始</label>
+                <input type="time" className={inputCls} value={manualStart} onChange={(e) => setManualStart(e.target.value)} />
+              </div>
+              <div>
+                <label className={labelCls}>结束</label>
+                <input type="time" className={inputCls} value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {type === 'fixed' && (
         <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-800 p-3">
@@ -272,7 +397,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
           disabled={!title.trim()}
           className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-500 disabled:opacity-40"
         >
-          添加并智能安排
+          {arrangeMode === 'auto' ? '添加并智能安排' : '添加并手动安排'}
         </button>
       </div>
       {submitErr && <p className="text-right text-xs text-rose-400">{submitErr}</p>}
