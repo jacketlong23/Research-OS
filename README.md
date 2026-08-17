@@ -14,7 +14,7 @@
 
 ## 快速上手
 
-1. 打开[在线地址](https://jacketlong23.github.io/Research-OS/),首次进入自带示例数据(REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD / REDACTED_RESEARCH_PROJECT / REDACTED_RESEARCH_METHOD 理论),可在「设置 → 数据」重置
+1. 打开[在线地址](https://jacketlong23.github.io/Research-OS/),首次进入自带示例数据(论文写作 / 实验数据分析 / 课程学习),可在「设置 → 数据」重置
 2. 每天打开只看**今日**页:Big 3 是今天最该做的三件事,时间轴上点 ✓ 完成任务
 3. 新任务用一句话创建:「导师让我明天下午之前做一个结果图,大约 1 小时」→ 解析 → 确认,自动插入今天的空隙
 4. 计划被打乱时点「🔄 智能重新安排」,只重排未来的块,已过去的时间不动

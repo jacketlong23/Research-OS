@@ -6,29 +6,29 @@ import { addDays, dateKey } from './time'
 export function seedProjects(): Project[] {
   return [
     {
-      id: 'proj_maoxian',
-      name: 'REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD',
+      id: 'proj_paper',
+      name: '论文写作',
       progress: 60,
-      current_focus: '大气残差问题(涪城一号 C 波段)',
-      next_step: '验证轨道残差 / 高程相关性',
+      current_focus: '引言与方法部分',
+      next_step: '补充实验数据',
       priority: 5,
       color: 'cyan',
     },
     {
-      id: 'proj_flood',
-      name: 'REDACTED_RESEARCH_PROJECT',
+      id: 'proj_experiment',
+      name: '实验数据分析',
       progress: 45,
-      current_focus: '核心模块开发',
-      next_step: '数据接口联调',
+      current_focus: '数据处理流程',
+      next_step: '验证结果一致性',
       priority: 4,
       color: 'emerald',
     },
     {
-      id: 'proj_theory',
-      name: 'REDACTED_RESEARCH_METHOD 理论',
+      id: 'proj_course',
+      name: '专业课程学习',
       progress: 40,
-      current_focus: '干涉几何',
-      next_step: '基准面 / 高程 / 地形相位模型推导',
+      current_focus: '核心章节',
+      next_step: '完成章节习题',
       priority: 4,
       color: 'violet',
     },
@@ -44,9 +44,9 @@ export function seedTasks(now: Date): Task[] {
   }
   return [
     {
-      id: 'task_atmos',
-      title: 'REDACTED_RESEARCH_AREA大气残差排查',
-      project_id: 'proj_maoxian',
+      id: 'task_draft',
+      title: '论文初稿撰写',
+      project_id: 'proj_paper',
       duration_minutes: 120,
       deadline: iso(0, 18),
       importance: 5,
@@ -58,9 +58,9 @@ export function seedTasks(now: Date): Task[] {
       created_at: now.toISOString(),
     },
     {
-      id: 'task_terrain',
-      title: 'REDACTED_RESEARCH_METHOD 地形相位模型推导',
-      project_id: 'proj_theory',
+      id: 'task_reproduce',
+      title: '实验结果复现',
+      project_id: 'proj_experiment',
       duration_minutes: 120,
       deadline: iso(2, 21),
       importance: 4,
@@ -72,9 +72,9 @@ export function seedTasks(now: Date): Task[] {
       created_at: now.toISOString(),
     },
     {
-      id: 'task_flood',
-      title: 'REDACTED_RESEARCH_TOPIC Agent 页面开发',
-      project_id: 'proj_flood',
+      id: 'task_preprocess',
+      title: '数据预处理脚本',
+      project_id: 'proj_experiment',
       duration_minutes: 90,
       deadline: iso(1, 18),
       importance: 4,
@@ -86,9 +86,9 @@ export function seedTasks(now: Date): Task[] {
       created_at: now.toISOString(),
     },
     {
-      id: 'task_paper',
-      title: '论文阅读:REDACTED_RESEARCH_METHOD 相位解缠',
-      project_id: 'proj_theory',
+      id: 'task_read',
+      title: '文献阅读与综述整理',
+      project_id: 'proj_course',
       duration_minutes: 45,
       deadline: iso(1, 21),
       importance: 3,
@@ -121,8 +121,8 @@ export function seedTasks(now: Date): Task[] {
     // 已完成示例(复盘页有内容可看)
     {
       id: 'task_done_demo',
-      title: `${today} 干涉几何学习(示例)`,
-      project_id: 'proj_theory',
+      title: `${today} 课程学习(示例)`,
+      project_id: 'proj_course',
       duration_minutes: 60,
       deadline: null,
       importance: 3,
@@ -142,9 +142,9 @@ export function seedDailyLogs(now: Date): DailyLog[] {
   return [
     {
       date: yest,
-      completed: ['干涉几何章节学习', 'REDACTED_RESEARCH_AREA数据基线校正复跑'],
-      problems: ['大气校正后仍存在长波残差'],
-      next: ['检查轨道残差'],
+      completed: ['核心章节学习', '实验数据复跑'],
+      problems: ['数据处理流程仍有细节待确认'],
+      next: ['检查结果一致性'],
     },
   ]
 }

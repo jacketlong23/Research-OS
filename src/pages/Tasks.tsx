@@ -390,7 +390,7 @@ function NewProject() {
     <div className="flex gap-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3">
       <input
         className={inputCls}
-        placeholder="项目名称,如:REDACTED_RESEARCH_AREA REDACTED_RESEARCH_METHOD"
+        placeholder="项目名称,如:论文写作"
         value={name}
         autoFocus
         onChange={(e) => setName(e.target.value)}
