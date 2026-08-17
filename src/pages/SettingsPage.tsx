@@ -156,7 +156,8 @@ export default function SettingsPage() {
           </button>
         </div>
         <p className="mb-3 text-[11px] text-slate-500">
-          只用于:自然语言建任务、优先级解释、半月报草稿。已内置默认 Key 和模型,可直接点「测试连接」验证;也可换成自己的 Key 覆盖。
+          只用于:自然语言建任务、优先级解释、半月报草稿。内置的是公共演示 Key,额度耗尽时 AI
+          自动降级为本地规则(点「测试连接」可看到具体原因);长期使用请填入自己的 Key。
         </p>
         {testResult && (
           <p className={`mb-3 rounded-lg px-3 py-2 text-xs ${testResult.ok ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>

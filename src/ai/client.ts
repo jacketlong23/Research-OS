@@ -76,6 +76,20 @@ export interface AITestResult {
   message: string
 }
 
+/** 把原始错误信息翻译成用户可操作的中文提示 */
+export function friendlyAIError(raw: string): string {
+  if (/HTTP 402/i.test(raw))
+    return '余额不足(HTTP 402):内置演示 Key 的额度已耗尽,请在「设置 → AI 配置」填入自己的 API Key(或给演示 Key 充值)'
+  if (/HTTP 40[13]/.test(raw)) return '认证失败(HTTP 401/403):API Key 无效或没有权限'
+  if (/HTTP 404/.test(raw)) return '接口不存在(HTTP 404):检查 Base URL 拼写(DeepSeek 为 https://api.deepseek.com)'
+  if (/HTTP 400/.test(raw))
+    return '请求被拒绝(HTTP 400):通常是模型名称不正确(deepseek-chat 等旧名称已下线,当前可用:deepseek-v4-flash / deepseek-v4-pro)'
+  if (/HTTP 429/.test(raw)) return '请求过于频繁(HTTP 429):触发限流,稍后再试'
+  if (/Failed to fetch|NetworkError|load failed/i.test(raw))
+    return '网络错误:无法访问 Base URL(检查网络/地址拼写;若网络正常,可能是该接口不允许浏览器跨域调用)'
+  return raw
+}
+
 /** 发一条最小请求验证 AI 配置是否可用,失败时给出可读的原因提示 */
 export async function testAIConnection(settings: Settings): Promise<AITestResult> {
   settings = effectiveSettings(settings)
@@ -87,14 +101,7 @@ export async function testAIConnection(settings: Settings): Promise<AITestResult
     return { ok: true, message: `连接成功:${settings.ai_model} · ${Date.now() - t0} ms · 回复「${reply.trim().slice(0, 20)}」` }
   } catch (e) {
     const raw = e instanceof Error ? e.message : String(e)
-    let hint = raw
-    if (/HTTP 40[13]/.test(raw)) hint = '认证失败(HTTP 401/403):API Key 无效或没有权限'
-    else if (/HTTP 404/.test(raw)) hint = '接口不存在(HTTP 404):检查 Base URL 拼写(DeepSeek 为 https://api.deepseek.com)'
-    else if (/HTTP 400/.test(raw)) hint = '请求被拒绝(HTTP 400):通常是模型名称不正确'
-    else if (/HTTP 429/.test(raw)) hint = '请求过于频繁(HTTP 429):余额不足或触发限流,稍后再试'
-    else if (/Failed to fetch|NetworkError|load failed/i.test(raw))
-      hint = '网络错误:无法访问 Base URL(检查网络/地址拼写;若网络正常,可能是该接口不允许浏览器跨域调用)'
-    return { ok: false, message: hint }
+    return { ok: false, message: friendlyAIError(raw) }
   }
 }
 
@@ -190,7 +197,8 @@ export async function parseTaskNL(text: string, settings: Settings, now: Date): 
       source: 'ai',
     }
   } catch (e) {
-    return { ...parseTaskLocal(text, now), error: e instanceof Error ? e.message : String(e) }
+    const raw = e instanceof Error ? e.message : String(e)
+    return { ...parseTaskLocal(text, now), error: friendlyAIError(raw) }
   }
 }
 
@@ -218,7 +226,8 @@ export async function explainRecommendation(
       `当前时间:${dateKey(now)}\n任务列表:\n${lines}`,
     )
   } catch (e) {
-    return `${local}\n\n(AI 解读调用失败,以上为本地规则:${e instanceof Error ? e.message : '未知错误'})`
+    const raw = e instanceof Error ? e.message : String(e)
+    return `${local}\n\n(AI 解读调用失败,以上为本地规则:${friendlyAIError(raw)})`
   }
 }
 
@@ -278,6 +287,7 @@ export async function draftBiweeklyReport(input: ReportInput, settings: Settings
       facts,
     )
   } catch (e) {
-    return `${reportLocalDraft(input)}\n\n(AI 生成失败,已降级为本地模板:${e instanceof Error ? e.message : '未知错误'})`
+    const raw = e instanceof Error ? e.message : String(e)
+    return `${reportLocalDraft(input)}\n\n(AI 生成失败,已降级为本地模板:${friendlyAIError(raw)})`
   }
 }

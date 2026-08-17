@@ -10,7 +10,7 @@ import {
   type Warning,
 } from '../engine/scheduler'
 import { colorClasses } from '../lib/colors'
-import { dateKey, fmtCnDate, fmtDeadlineRelative, fmtDuration, hhmmToMinutes, minutesOfDay, minutesToHHmm } from '../lib/time'
+import { addDays, dateKey, fmtCnDate, fmtDeadlineRelative, fmtDuration, hhmmToMinutes, minutesOfDay, minutesToHHmm } from '../lib/time'
 import { useNow } from '../lib/useNow'
 import { explainRecommendation } from '../ai/client'
 import TaskForm from '../components/TaskForm'
@@ -34,6 +34,7 @@ export default function Today() {
   const [warnings, setWarnings] = useState<Warning[]>([])
   const [explanation, setExplanation] = useState('')
   const [explaining, setExplaining] = useState(false)
+  const [rescheduleMsg, setRescheduleMsg] = useState('')
   const autoRan = useRef(false)
 
   // 首次打开且今天还没有任何安排时,自动智能排程一次
@@ -66,6 +67,16 @@ export default function Today() {
     const r = reschedule(tasks, projects, schedule, settings, now)
     setSchedule(r.schedule)
     setWarnings(r.warnings)
+    // 排程结果与之前相同时界面毫无变化,必须给出可感知的执行反馈
+    let blocks7d = 0
+    for (let d = 0; d < 7; d++) blocks7d += (r.schedule[dateKey(addDays(now, d))] ?? []).length
+    const todayFuture = (r.schedule[todayKey] ?? []).filter((s) => hhmmToMinutes(s.end) > mins).length
+    const pendingCount = r.warnings.length
+    setRescheduleMsg(
+      `今日剩余时间安排 ${todayFuture} 块 · 未来 7 天共 ${blocks7d} 块${
+        pendingCount > 0 ? ` · ${pendingCount} 条提醒见下方` : ''
+      }`,
+    )
   }
 
   const handleExplain = async () => {
@@ -121,6 +132,17 @@ export default function Today() {
             <p className="text-[11px] text-slate-500">{next ? `${minutesToHHmm(next.start)} 开始` : '无'}</p>
           </div>
         </div>
+
+        {rescheduleMsg && (
+          <div className="animate-fade-in mt-3 rounded-lg bg-cyan-950/30 px-3 py-2 text-xs leading-5">
+            <p className="text-cyan-300">✓ 已重新安排:{rescheduleMsg}</p>
+            <p className="mt-0.5 text-slate-500">
+              规则:避开固定事件 · 按截止紧迫/重要度/阻塞关系评分排序 · 单块 ≤ {settings.deep_max_minutes} 分钟 · 块间留{' '}
+              {settings.break_minutes} 分钟缓冲 · 每日排程 ≤ 工作时间的 {Math.round(settings.fill_ratio * 100)}% ·
+              覆盖今天与未来 7 天,已过去的时间块保持不动
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Big 3 */}

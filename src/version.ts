@@ -1,2 +1,2 @@
 /** 应用版本号(设置页底部与浏览器控制台显示,用于确认是否加载了最新版) */
-export const APP_VERSION = '0.3.2'
+export const APP_VERSION = '0.3.3'

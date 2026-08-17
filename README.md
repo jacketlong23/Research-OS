@@ -49,6 +49,7 @@ React 18 + TypeScript(严格模式)+ Vite · Tailwind CSS v4 · zustand(localSto
 AI 为**可选增强**(OpenAI 兼容接口,默认 DeepSeek):自然语言建任务、优先级解释、半月报草稿。
 不配置 API Key 时全部功能自动降级为本地规则,不影响使用;Key 只保存在本机浏览器。
 配置后可在「设置 → AI 配置」点 **测试连接** 验证(Base URL / 模型名 / Key 是否可用)。
+注:代码内置的是公共演示 Key,额度可能耗尽(测试连接提示 402 余额不足),届时在设置中换成自己的 DeepSeek Key 即可。
 
 ## 项目结构
 

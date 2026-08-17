@@ -103,6 +103,18 @@ export const useDailyLogsStore = create<DailyLogsState>()(
 )
 
 // ---------- 设置 ----------
+
+/** 已在 DeepSeek 下线的旧模型名(老版本默认值,残留在用户 localStorage 里会导致所有请求 400) */
+const DEAD_MODELS = ['deepseek-chat', 'deepseek-reasoner', 'deepseek-coder']
+
+/** 持久化数据迁移:v2 把旧模型名换成当前默认;自定义模型不动 */
+export function migrateSettings(settings: Partial<Settings>): Partial<Settings> {
+  if (settings.ai_model && DEAD_MODELS.includes(settings.ai_model)) {
+    return { ...settings, ai_model: DEFAULT_SETTINGS.ai_model }
+  }
+  return settings
+}
+
 interface SettingsState {
   settings: Settings
   update: (patch: Partial<Settings>) => void
@@ -116,7 +128,17 @@ export const useSettingsStore = create<SettingsState>()(
       update: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
       reset: () => set({ settings: DEFAULT_SETTINGS }),
     }),
-    { name: 'research-os:settings', version: 1 },
+    {
+      name: 'research-os:settings',
+      version: 2,
+      migrate: (state, version) => {
+        const s = state as { settings?: Partial<Settings> } | null | undefined
+        if (version < 2 && s?.settings) {
+          s.settings = migrateSettings(s.settings)
+        }
+        return state
+      },
+    },
   ),
 )
 
