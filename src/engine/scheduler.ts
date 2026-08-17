@@ -493,6 +493,10 @@ export function insertTaskAtTime(
   now: Date,
   startMinutes: number,
 ): { schedule: Schedule; anchored: boolean; placed: ScheduleSlot[] } {
+  // 锚点在今天已过去的时刻:退回增量插入,避免把任务排到过去
+  if (startMinutes < minutesOfDay(now)) {
+    return { ...insertTaskIncrementally(task, schedule, tasks, settings, now), anchored: false }
+  }
   const we = hhmmToMinutes(settings.work_end)
   const chunks = splitChunks(
     task.duration_minutes,

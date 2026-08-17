@@ -124,8 +124,8 @@ export default function Review() {
         </div>
       </section>
 
-      {/* Daily Log */}
-      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      {/* Daily Log(key 随日期变化强制重挂载,跨午夜后表单重置为新一天,避免把昨天的记录误存到今天) */}
+      <section key={todayKey} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
         <h3 className="mb-1 text-sm font-semibold text-slate-300">📝 今日记录(2-5 分钟)</h3>
         <p className="mb-3 text-[11px] text-slate-500">每天只记三件事:完成了什么、遇到什么问题、明天做什么。</p>
         <div className="space-y-3">

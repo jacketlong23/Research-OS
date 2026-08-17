@@ -36,9 +36,12 @@ export function workMinutesUntil(deadline: string, settings: Settings, now: Date
   while (dateKeyOf(cursor) <= dateKeyOf(dl)) {
     const sameDay = dateKeyOf(cursor) === dateKeyOf(dl)
     if (sameDay) {
-      const dlMin = dl.getHours() * 60 + dl.getMinutes()
-      const start = cursor.getTime() >= dl.getTime() ? 0 : Math.max(hhmmToMinutes(settings.work_start), now.getHours() * 60 + now.getMinutes())
-      total += Math.max(0, Math.min(dlMin, hhmmToMinutes(settings.work_end)) - start)
+      // 截止时刻已过:当天不再有可用时间(此前误从 0 点起算,导致过期任务的截止风险被低估)
+      if (cursor.getTime() < dl.getTime()) {
+        const dlMin = dl.getHours() * 60 + dl.getMinutes()
+        const start = Math.max(hhmmToMinutes(settings.work_start), now.getHours() * 60 + now.getMinutes())
+        total += Math.max(0, Math.min(dlMin, hhmmToMinutes(settings.work_end)) - start)
+      }
     } else if (dateKeyOf(cursor) === dateKeyOf(now)) {
       // 今天剩余
       total += Math.max(0, hhmmToMinutes(settings.work_end) - Math.max(hhmmToMinutes(settings.work_start), now.getHours() * 60 + now.getMinutes()))

@@ -1,4 +1,4 @@
-import type { DailyLog, Project, Schedule, Task } from '../types'
+import type { DailyLog, Project, Task } from '../types'
 import { addDays, dateKey } from './time'
 
 /** 首次打开时的示例数据,日期相对"今天"生成,保证任何时候打开都成立 */
@@ -135,11 +135,6 @@ export function seedTasks(now: Date): Task[] {
       completed_at: addDays(now, -1).toISOString(),
     },
   ]
-}
-
-export function seedSchedule(): Schedule {
-  // 排程由引擎在首屏自动生成,这里留空
-  return {}
 }
 
 export function seedDailyLogs(now: Date): DailyLog[] {

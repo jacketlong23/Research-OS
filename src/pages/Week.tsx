@@ -38,6 +38,10 @@ export default function Week() {
   const onDrop = (toKey: string, taskId: string, fromKey: string) => {
     setDragOver(null)
     if (toKey === fromKey) return
+    if (toKey < todayKey) {
+      alert('不能把任务移动到过去的日期')
+      return
+    }
     const next = moveTaskDay(schedule, taskId, fromKey, toKey, tasks)
     if (!next) {
       alert('目标日期该时间段已有安排(或与固定事件冲突)')

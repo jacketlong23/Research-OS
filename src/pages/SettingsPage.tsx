@@ -222,7 +222,7 @@ export default function SettingsPage() {
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0]
-            if (f) importData(f)
+            if (f && confirm('导入会覆盖当前全部数据(任务/项目/排程/记录/设置),确定继续?')) importData(f)
             e.target.value = ''
           }}
         />

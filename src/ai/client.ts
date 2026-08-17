@@ -43,19 +43,30 @@ async function chat(settings: Settings, system: string, user: string): Promise<s
     temperature: 0.3,
   }
   if (/deepseek/i.test(base)) body.thinking = { type: 'disabled' }
-  const res = await fetch(`${base}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${settings.ai_api_key}`,
-    },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`AI 请求失败(HTTP ${res.status})`)
-  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] }
-  const content = data.choices?.[0]?.message?.content
-  if (!content) throw new Error('AI 返回为空')
-  return content
+  // 网络挂起时 30 秒放弃,避免按钮永远停在"解析中"
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 30_000)
+  try {
+    const res = await fetch(`${base}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${settings.ai_api_key}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+    if (!res.ok) throw new Error(`AI 请求失败(HTTP ${res.status})`)
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] }
+    const content = data.choices?.[0]?.message?.content
+    if (!content) throw new Error('AI 返回为空')
+    return content
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw new Error('AI 请求超时(30 秒)')
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // ---------- 连接测试 ----------
@@ -206,8 +217,8 @@ export async function explainRecommendation(
       '你是科研时间规划助手。根据任务列表,用 3-5 句中文解释为什么建议这个优先顺序,以及今天的时间安排思路。务实、简短。',
       `当前时间:${dateKey(now)}\n任务列表:\n${lines}`,
     )
-  } catch {
-    return local
+  } catch (e) {
+    return `${local}\n\n(AI 解读调用失败,以上为本地规则:${e instanceof Error ? e.message : '未知错误'})`
   }
 }
 

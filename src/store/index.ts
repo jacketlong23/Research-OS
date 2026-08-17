@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { DailyLog, Project, Schedule, Settings, Task } from '../types'
 import { DEFAULT_SETTINGS } from '../types'
-import { seedDailyLogs, seedProjects, seedSchedule, seedTasks } from '../lib/seed'
+import { seedDailyLogs, seedProjects, seedTasks } from '../lib/seed'
 import { uid } from '../lib/time'
 
 // ---------- 项目 ----------
@@ -132,9 +132,7 @@ export function ensureSeeded(now = new Date()): boolean {
     useTasksStore.getState().setTasks(seedTasks(now))
     seeded = true
   }
-  if (useScheduleStore.getState().schedule === undefined) {
-    useScheduleStore.getState().setSchedule(seedSchedule())
-  }
+  // 排程不播种,由今日页在首屏自动智能排程
   if (useDailyLogsStore.getState().logs.length === 0) {
     useDailyLogsStore.getState().setLogs(seedDailyLogs(now))
   }

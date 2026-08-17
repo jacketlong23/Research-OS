@@ -200,8 +200,10 @@ export default function Today() {
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const raw = ws + (e.clientY - rect.top) / PX_PER_MIN
-            const snapped = Math.round(raw / 15) * 15
-            setPlaceAt(Math.min(Math.max(snapped, ws), we - 60))
+            // 不早于当前时刻(点击上午空白处不再把任务排到过去)
+            const snapped = Math.max(Math.round(raw / 15) * 15, Math.ceil(mins / 15) * 15)
+            // 今天下班前已放不下完整块时,交给增量插入找最近的空闲时间
+            setPlaceAt(snapped > we - 60 ? undefined : Math.min(snapped, we - 60))
             setShowForm(true)
           }}
         >

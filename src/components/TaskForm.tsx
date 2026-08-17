@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Task, TaskType } from '../types'
 import { useProjectsStore, useScheduleStore, useSettingsStore, useTasksStore } from '../store'
 import { insertTaskAtTime, insertTaskIncrementally } from '../engine/scheduler'
-import { isoToLocalInput, localInputToISO, minutesToHHmm } from '../lib/time'
+import { hhmmToMinutes, isoToLocalInput, localInputToISO, minutesToHHmm } from '../lib/time'
 import { parseTaskNL } from '../ai/client'
 
 export interface TaskFormInitial {
@@ -37,6 +37,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
   const [nl, setNl] = useState('')
   const [parsing, setParsing] = useState(false)
   const [parseHint, setParseHint] = useState('')
+  const [submitErr, setSubmitErr] = useState('')
 
   const [title, setTitle] = useState(initial?.title ?? '')
   const [projectId, setProjectId] = useState<string>('')
@@ -76,6 +77,18 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
 
   const submit = () => {
     if (!title.trim()) return
+    // 固定事件缺日期/重复或时间倒置时,引擎会静默忽略它(时间轴上永远不显示),提交前拦截
+    if (type === 'fixed') {
+      if (hhmmToMinutes(endTime) <= hhmmToMinutes(startTime)) {
+        setSubmitErr('固定事件的结束时间必须晚于开始时间')
+        return
+      }
+      if (!fixedDate && repeatDays.length === 0) {
+        setSubmitErr('固定事件需要指定一次性日期,或勾选每周重复(至少一项)')
+        return
+      }
+    }
+    setSubmitErr('')
     const base = {
       title: title.trim(),
       project_id: projectId || null,
@@ -260,6 +273,7 @@ export default function TaskForm({ initial, placeAtMinutes, onDone }: Props) {
           添加并智能安排
         </button>
       </div>
+      {submitErr && <p className="text-right text-xs text-rose-400">{submitErr}</p>}
     </div>
   )
 }

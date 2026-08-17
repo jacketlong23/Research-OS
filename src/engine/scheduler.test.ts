@@ -95,6 +95,14 @@ describe('scoreTask', () => {
       scoreTask(normal, null, SETTINGS, NOW).total,
     )
   })
+
+  it('截止已过期的任务,截止风险为满分(可用工作时长按 0 算)', () => {
+    const afternoon = new Date(2026, 7, 12, 15, 0) // 15:00
+    const expired = flexTask({ deadline: new Date(2026, 7, 12, 10, 0).toISOString() }) // 今天 10:00 已过
+    const s = scoreTask(expired, null, SETTINGS, afternoon)
+    expect(s.urgency).toBe(1)
+    expect(s.deadlineRisk).toBe(1)
+  })
 })
 
 describe('reschedule', () => {
@@ -260,6 +268,16 @@ describe('insertTaskAtTime(点击空白处快速安排)', () => {
     const { schedule, anchored } = insertTaskAtTime(t, {}, [fixed, t], SETTINGS, NOW, 14 * 60)
     expect(anchored).toBe(false)
     expect(slotTimes(schedule, TODAY)).toEqual([['09:00', '10:00']])
+  })
+
+  it('锚点在今天已过去的时刻时,退回增量插入且不会排到过去', () => {
+    const afternoon = new Date(2026, 7, 12, 15, 0) // 15:00
+    const t = flexTask({ duration_minutes: 60 })
+    const { schedule, anchored } = insertTaskAtTime(t, {}, [t], SETTINGS, afternoon, 10 * 60) // 点击 10:00
+    expect(anchored).toBe(false)
+    const slots = schedule[dateKey(afternoon)] ?? []
+    expect(slots.length).toBeGreaterThan(0)
+    for (const s of slots) expect(Number(s.start.slice(0, 2)) * 60 + Number(s.start.slice(3))).toBeGreaterThanOrEqual(15 * 60)
   })
 })
 

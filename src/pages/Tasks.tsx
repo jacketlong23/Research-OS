@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Project, Task, TaskStatus } from '../types'
 import { useProjectsStore, useScheduleStore, useTasksStore } from '../store'
-import { removeFutureSlots } from '../engine/scheduler'
+import { removeAllSlots } from '../engine/scheduler'
 import { colorClasses, COLOR_NAMES } from '../lib/colors'
 import { fmtDeadlineRelative, fmtDuration, isoToLocalInput, localInputToISO } from '../lib/time'
 import { useNow } from '../lib/useNow'
@@ -33,7 +33,8 @@ function TaskRow({ task }: { task: Task }) {
   const handleDelete = () => {
     if (!confirm(`删除任务「${task.title}」?`)) return
     deleteTask(task.id)
-    setSchedule(removeFutureSlots(schedule, task.id, now))
+    // 任务删除后时间块一起清掉,避免留下指向不存在任务的孤儿数据
+    setSchedule(removeAllSlots(schedule, task.id))
   }
 
   return (
