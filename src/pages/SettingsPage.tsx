@@ -11,6 +11,7 @@ import {
 } from '../store'
 import { testAIConnection, type AITestResult } from '../ai/client'
 import { hhmmToMinutes, uid } from '../lib/time'
+import { applyTheme, getTheme, type Theme } from '../lib/theme'
 import { APP_VERSION } from '../version'
 
 const inputCls =
@@ -90,6 +91,12 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<AITestResult | null>(null)
   const [periodError, setPeriodError] = useState('')
+  const [theme, setTheme] = useState<Theme>(getTheme())
+
+  const changeTheme = (t: Theme) => {
+    setTheme(t)
+    applyTheme(t)
+  }
 
   const runTest = async () => {
     setTesting(true)
@@ -143,6 +150,34 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
+      {/* 外观 */}
+      <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+        <h3 className="mb-1 text-sm font-semibold text-slate-300">🎨 外观</h3>
+        <p className="mb-3 text-[11px] text-slate-500">选择页面配色主题,立即生效并自动保存。</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => changeTheme('light')}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+              theme === 'light'
+                ? 'border-cyan-600 bg-cyan-950/50 text-cyan-300'
+                : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+            }`}
+          >
+            ☀️ 亮色
+          </button>
+          <button
+            onClick={() => changeTheme('dark')}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
+              theme === 'dark'
+                ? 'border-cyan-600 bg-cyan-950/50 text-cyan-300'
+                : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+            }`}
+          >
+            🌙 暗色
+          </button>
+        </div>
+      </section>
+
       {/* 工作时段 */}
       <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
         <h3 className="mb-1 text-sm font-semibold text-slate-300">⏰ 工作时段</h3>
