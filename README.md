@@ -118,18 +118,27 @@ Research OS 默认仍是**纯本地应用**：不登录也能完整使用，所�
 
 ### 启用步骤
 
-1. **创建 Supabase 项目**：在 [supabase.com](https://supabase.com) 新建项目，记下 Project URL 和 Publishable Key（`sb_publishable_...`）。
-2. **建表**：在 Supabase 的 SQL Editor 里执行仓库中的 [`supabase/schema.sql`](./supabase/schema.sql)（会创建 `research_os_snapshots` 表并开启 RLS）。
-3. **本地配置**（开发用）：
+1. **创建 Supabase 项目**：登录 [supabase.com](https://supabase.com)（可用 GitHub 账号）→ **New project**，填名称、生成数据库密码（务必保存）、Region 选新加坡或东京，等 2–3 分钟初始化。
+2. **建表**：进入项目 → 左侧 **SQL Editor** → **New query** → 粘贴 [`supabase/schema.sql`](./supabase/schema.sql) 全部内容 → **Run**。成功后左侧 Table Editor 能看到 `research_os_snapshots` 表（含 4 条 RLS 策略）。
+3. **拿 URL 和 Publishable Key**：点右上角绿色 **Connect** 按钮（或 Settings → API）。注意 **Project URL 不在 API Keys 页面**，它在 Connect 弹窗或 Settings → General 里。
+   - `VITE_SUPABASE_URL` ← Project URL（形如 `https://xxxx.supabase.co`）
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` ← Publishable key（`sb_publishable_...`；若项目仍显示旧版 `anon public` key，也可用）
+   - ⚠️ 切勿使用 `sb_secret_*` / `service_role`：它们绕过 RLS，属后端专用密钥。
+4. **本地配置**（开发用）：
    ```bash
    cp .env.example .env.local
    # 编辑 .env.local，填入 VITE_SUPABASE_URL 和 VITE_SUPABASE_PUBLISHABLE_KEY
    ```
-4. **GitHub Pages 配置**：在仓库 `Settings → Secrets and variables → Actions → Variables` 添加两个 Repository Variables：
+5. **GitHub Pages 配置**：在仓库 `Settings → Secrets and variables → Actions → Variables` 添加两个 Repository Variables：
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-   推送 `main` 后，`deploy.yml` 会把这些变量注入到构建环境，无需把实际值硬编码进仓库。
+   推送 `main` 后 `deploy.yml` 会把变量注入构建环境；再到 Actions 页手动 **Run workflow** 重新部署一次即可生效。
+
+### 常见坑
+
+- **邮箱验证**：Supabase 新项目默认开启「注册后邮箱确认」。若注册后提示去邮箱验证，可在 **Authentication → Sign In / Providers → Email** 关闭 **Confirm email**（本地测试可关）。
+- **找不到 URL**：Project URL 在顶部 **Connect** 弹窗或 **Settings → General**，不在 API Keys 页面。
 
 ### 如何关闭 / 不使用云同步
 
