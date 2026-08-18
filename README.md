@@ -45,7 +45,7 @@ Score = 0.30×Urgency + 0.25×Importance + 0.20×DeadlineRisk + 0.15×Blocking +
 
 ## 技术栈
 
-React 18 + TypeScript(严格模式)+ Vite · Tailwind CSS v4 · zustand(localStorage 持久化) · react-router-dom(HashRouter) · Vitest
+React 18 + TypeScript(严格模式)+ Vite · Tailwind CSS v4 · zustand(localStorage 持久化) · react-router-dom(HashRouter) · Vitest · Supabase(Auth + Postgres RLS，可选云同步)
 
 AI 为**可选增强**(OpenAI 兼容接口,默认 DeepSeek):自然语言建任务、优先级解释、半月报草稿。
 AI 功能为可选增强。API Key 仅保存在当前浏览器 localStorage 中,不会上传到 Research OS 或 GitHub。
@@ -61,9 +61,10 @@ src/
 │   ├── score.ts         # 评分:紧迫度/重要度/截止风险/阻塞/项目优先级
 │   ├── scheduler.ts     # 空闲槽、日/周排程、增量插入、跨天移动
 │   └── scheduler.test.ts
-├── pages/           # 今日 / 本周 / 任务 / 复盘 / 设置
+├── pages/           # 今日 / 本周 / 任务 / 复盘 / 设置 / 账号
 ├── components/      # 任务表单(手动 + 自然语言解析)
 ├── ai/client.ts     # OpenAI 兼容客户端,无 Key 全降级
+├── cloud/           # 可选云同步(Supabase Auth + 快照 RLS),未配置时完全不介入
 ├── store/           # zustand persist × 5 个 localStorage key
 ├── lib/             # 时间工具 / 主题色映射 / 种子数据
 └── types.ts         # Project / Task / Schedule / DailyLog / Settings
@@ -94,6 +95,45 @@ Research OS 的个人数据默认保存在当前浏览器的 localStorage 中(5 
 建议定期使用「设置 → 数据 → 导出 JSON」进行备份(导出的 JSON **不包含 API Key**),之后可随时导入恢复。
 
 不同用户打开同一个 GitHub Pages 地址时,各自使用自己的浏览器 localStorage,不会看到其他用户的任务和科研记录。
+
+## 账号与云同步
+
+Research OS 默认仍是**纯本地应用**：不登录也能完整使用，所有数据保存在当前浏览器 localStorage。云同步是**可选增强**，用于让同一个账号在 Mac / Windows / 不同浏览器之间同步 projects、tasks、schedule、daily_logs 和普通 settings。
+
+### 工作原理
+
+- 采用 Supabase Auth（邮箱 + 密码）+ Postgres RLS，不新增自建密码服务器。
+- 每个账号在数据库里只保存一条完整 JSON 快照（`public.research_os_snapshots`）。
+- 本地优先：修改 → Zustand → localStorage 立即保存 → 云端异步防抖上传。
+- 首次登录**不会自动上传或下载**，必须由用户明确选择「本机上传到云端」或「用云端数据覆盖本机」，避免共享电脑上残留数据被误传到新账号。
+- 双设备同时修改时进入**冲突**状态，绝不静默覆盖，由用户选择保留哪一侧。
+- 退出账号会先尝试同步未保存修改，然后清除本机科研数据，避免下一位使用同一浏览器的人看到上一个账号的数据。
+
+### 安全边界（务必遵守）
+
+- **Publishable Key 可以出现在前端**（它本就是浏览器公开标识），真正的数据隔离依赖用户 JWT + RLS。
+- **`sb_secret_*` / `service_role` 绝对不能进入前端、仓库或任何 VITE_* 变量**。
+- **AI API Key 不参与云同步**：上传快照用显式白名单排除 `ai_api_key`，从云端下载设置时保留本机已有的 Key，退出时也不上传。
+- 数据库必须启用 RLS 并限定 `auth.uid() = user_id`，匿名用户无权访问该表。
+
+### 启用步骤
+
+1. **创建 Supabase 项目**：在 [supabase.com](https://supabase.com) 新建项目，记下 Project URL 和 Publishable Key（`sb_publishable_...`）。
+2. **建表**：在 Supabase 的 SQL Editor 里执行仓库中的 [`supabase/schema.sql`](./supabase/schema.sql)（会创建 `research_os_snapshots` 表并开启 RLS）。
+3. **本地配置**（开发用）：
+   ```bash
+   cp .env.example .env.local
+   # 编辑 .env.local，填入 VITE_SUPABASE_URL 和 VITE_SUPABASE_PUBLISHABLE_KEY
+   ```
+4. **GitHub Pages 配置**：在仓库 `Settings → Secrets and variables → Actions → Variables` 添加两个 Repository Variables：
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+   推送 `main` 后，`deploy.yml` 会把这些变量注入到构建环境，无需把实际值硬编码进仓库。
+
+### 如何关闭 / 不使用云同步
+
+不配置 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_PUBLISHABLE_KEY` 即可——未配置时「账号」页只显示配置引导，Research OS 保持纯本地模式，所有现有功能不受影响。
 
 ## 部署
 
