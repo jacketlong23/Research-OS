@@ -189,7 +189,7 @@ describe('退出安全', () => {
     expect(useCloudStore.getState().session).not.toBeNull()
   })
 
-  it('正常退出会清除本机科研数据并保留 AI Key', async () => {
+  it('正常退出会清除本机科研数据和 AI Key', async () => {
     useCloudStore.setState({ session: makeSession(), linked: true, dirty: false })
     useProjectsStore.setState({
       projects: [{ id: 'pa', name: '项目', progress: 10, current_focus: '', next_step: '', priority: 1, color: 'cyan' }],
@@ -200,7 +200,7 @@ describe('退出安全', () => {
 
     expect(mockSignOut).toHaveBeenCalledTimes(1)
     expect(useProjectsStore.getState().projects).toEqual([]) // 科研数据被清除
-    expect(useSettingsStore.getState().settings.ai_api_key).toBe('local-key') // Key 保留
+    expect(useSettingsStore.getState().settings.ai_api_key).toBe('') // 防止下一账号继承设备凭据
     expect(useCloudStore.getState().session).toBeNull()
     expect(useCloudStore.getState().linked).toBe(false)
   })

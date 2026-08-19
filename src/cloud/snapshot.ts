@@ -73,16 +73,18 @@ export function applyResearchSnapshot(snapshot: ResearchSnapshot): void {
   useSettingsStore.getState().update({ ...migrated, ai_api_key: currentKey })
 }
 
-/** 账号退出或切换账号时清除可能泄露的同步数据；本机 AI Key 保留。 */
+/**
+ * 账号退出或切换账号时清除可能泄露的科研数据和设备级 AI Key。
+ * AI Key 不上传云端，但也不能让下一位登录者继承前一位用户的本机凭据。
+ */
 export function clearSyncedResearchData(): void {
   useProjectsStore.getState().setProjects([])
   useTasksStore.getState().setTasks([])
   useScheduleStore.getState().setSchedule({})
   useDailyLogsStore.getState().setLogs([])
 
-  const currentKey = useSettingsStore.getState().settings.ai_api_key
   useSettingsStore.getState().update({
     ...settingsForCloud(DEFAULT_SETTINGS),
-    ai_api_key: currentKey,
+    ai_api_key: '',
   })
 }
