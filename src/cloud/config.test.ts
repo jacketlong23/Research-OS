@@ -18,4 +18,22 @@ describe('getCloudConfig（Supabase 配置）', () => {
     })
     expect(c).toEqual({ url: 'https://abc.supabase.co', publishableKey: 'sb_publishable_k' })
   })
+
+  it('拒绝 sb_secret_*，避免高权限 Key 被打进浏览器', () => {
+    expect(() =>
+      getCloudConfig({
+        VITE_SUPABASE_URL: 'https://abc.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_secret_do_not_ship',
+      }),
+    ).toThrow(/Secret\/service_role/)
+  })
+
+  it('拒绝明文 service_role 标记', () => {
+    expect(() =>
+      getCloudConfig({
+        VITE_SUPABASE_URL: 'https://abc.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'service_role',
+      }),
+    ).toThrow(/Secret\/service_role/)
+  })
 })
