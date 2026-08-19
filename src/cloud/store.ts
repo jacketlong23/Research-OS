@@ -27,6 +27,9 @@ interface CloudState {
   clearSessionAfterLogout: () => void
 }
 
+// v1 曾把 access/refresh token 持久化到 localStorage；升级时主动删除旧副本。
+if (typeof window !== 'undefined') window.localStorage.removeItem('research-os:cloud')
+
 /**
  * 登录 access/refresh token 只保存在当前浏览器会话(sessionStorage)中。
  * 关闭标签页/浏览器后自动失效，避免 refresh token 长期驻留 localStorage。
