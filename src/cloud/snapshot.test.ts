@@ -63,7 +63,7 @@ describe('collectResearchSnapshot', () => {
   })
 })
 
-describe('applyResearchSnapshot（保留本机 AI Key）', () => {
+describe('applyResearchSnapshot（保留当前设备 AI Key）', () => {
   it('应用云端快照后本机 ai_api_key 保持不变，普通设置被云端覆盖', () => {
     useSettingsStore.setState({
       settings: fullSettings({ ai_api_key: 'local-key', ai_model: 'local-model' }),
@@ -88,20 +88,20 @@ describe('applyResearchSnapshot（保留本机 AI Key）', () => {
     applyResearchSnapshot(snapshot)
 
     const s = useSettingsStore.getState().settings
-    expect(s.ai_api_key).toBe('local-key') // 本机 Key 保留
-    expect(s.ai_model).toBe('cloud-model') // 普通设置被云端覆盖
+    expect(s.ai_api_key).toBe('local-key')
+    expect(s.ai_model).toBe('cloud-model')
     expect(useProjectsStore.getState().projects).toEqual([project('cloud-p')])
   })
 })
 
-describe('clearSyncedResearchData（退出清理保留 Key）', () => {
-  it('清空科研数据但保留本机 ai_api_key', () => {
+describe('clearSyncedResearchData（退出/切换账号安全清理）', () => {
+  it('清空科研数据，同时清除本机 ai_api_key，避免下一账号继承凭据', () => {
     useProjectsStore.setState({ projects: [project()] })
     useSettingsStore.setState({ settings: fullSettings({ ai_api_key: 'local-key' }) })
 
     clearSyncedResearchData()
 
     expect(useProjectsStore.getState().projects).toEqual([])
-    expect(useSettingsStore.getState().settings.ai_api_key).toBe('local-key')
+    expect(useSettingsStore.getState().settings.ai_api_key).toBe('')
   })
 })
