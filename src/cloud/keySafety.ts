@@ -14,8 +14,11 @@ export function isForbiddenFrontendSupabaseKey(key: string): boolean {
     try {
       const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
       const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')
-      const payload = JSON.parse(globalThis.atob(padded)) as { role?: unknown }
-      if (payload.role === 'service_role') return true
+      const decoder = (globalThis as unknown as { atob?: (input: string) => string }).atob
+      if (decoder) {
+        const payload = JSON.parse(decoder(padded)) as { role?: unknown }
+        if (payload.role === 'service_role') return true
+      }
     } catch {
       // 不是可解析 JWT 时继续按普通 publishable key 处理。
     }
