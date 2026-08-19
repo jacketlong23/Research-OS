@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import type { CloudSession } from './api'
 
 export type CloudSyncStatus = 'idle' | 'syncing' | 'synced' | 'conflict' | 'error'
@@ -27,6 +27,11 @@ interface CloudState {
   clearSessionAfterLogout: () => void
 }
 
+/**
+ * 登录 access/refresh token 只保存在当前浏览器会话(sessionStorage)中。
+ * 关闭标签页/浏览器后自动失效，避免 refresh token 长期驻留 localStorage。
+ * 注意：sessionStorage 仍不能抵御同源 XSS，因此页面代码仍需避免危险 HTML 注入。
+ */
 export const useCloudStore = create<CloudState>()(
   persist(
     (set) => ({
@@ -42,7 +47,6 @@ export const useCloudStore = create<CloudState>()(
       setSession: (session) => set({ session }),
       setActiveUser: (activeUserId) => set({ activeUserId }),
       setLinked: (linked) => set({ linked }),
-      // 未完成首次绑定前不标记 dirty，避免触发自动上传
       markDirty: () => set((state) => (state.linked ? { dirty: true } : {})),
       setSynced: (lastSyncedAt) => set({ dirty: false, lastSyncedAt, status: 'synced', message: '已同步' }),
       setStatus: (status, message = '') => set({ status, message }),
@@ -59,8 +63,6 @@ export const useCloudStore = create<CloudState>()(
       clearSessionAfterLogout: () =>
         set({
           session: null,
-          // 退出后重置 linked，确保下次登录(即使是同一账号)也重新走来源选择，
-          // 不依赖「退出已清空数据」这个隐含前提，更保守可预测。
           linked: false,
           dirty: false,
           lastSyncedAt: null,
@@ -70,7 +72,8 @@ export const useCloudStore = create<CloudState>()(
     }),
     {
       name: 'research-os:cloud',
-      version: 1,
+      version: 2,
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         session: state.session,
         activeUserId: state.activeUserId,
